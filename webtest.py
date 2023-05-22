@@ -1,9 +1,13 @@
 import os
 from selenium import webdriver
+import time
 from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 import xlrd
+
+caller_xpath = "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div/div/div/div[2]/div/div/div/div/a"
+call_btn_xpath = "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/div/div[1]/span/div"
 
 
 def main():
@@ -12,48 +16,47 @@ def main():
     # mypassword = input("Enter password: ")
     myusername = "kutousam@gmail.com"
     mypassword = "QPSam15982818"
+
+    # see https://stackoverflow.com/questions/43734797/page-load-strategy-for-chrome-driver-updated-till-selenium-v3-12-0
     options = webdriver.ChromeOptions()
+    options.page_load_strategy = 'eager'
+
+    # see https://stackoverflow.com/questions/38832776/how-do-i-allow-chrome-to-use-my-microphone-programmatically
+    # and https://stackoverflow.com/questions/39381088/selenium-python-chrome-open-with-def-options
+    options.add_argument("use-fake-device-for-media-stream")
+    options.add_argument("use-fake-ui-for-media-stream")
+
     browser = webdriver.Chrome(options=options)
-    # see https://stackoverflow.com/questions/61308799/unable-to-locate-elements-in-selenium-python
-    browser.get("https://www.messenger.com/login/")
-    browser.find_element(By.ID, "email").send_keys(myusername)
-    browser.find_element(By.ID, "pass").send_keys(mypassword)
-    browser.find_element(By.ID, "loginbutton").click()
-    # see https://www.testclass.cn/selenium_iframe.html
-    while(not hasElement(browser, "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div/div/div/div[2]/div/div/div/div/a")):
-        pass
-    sleep(3)
+
+    # # see https://stackoverflow.com/questions/61308799/unable-to-locate-elements-in-selenium-python
+    # browser.get("https://www.messenger.com/login/")
+    # browser.find_element(By.ID, "email").send_keys(myusername)
+    # browser.find_element(By.ID, "pass").send_keys(mypassword)
+    # browser.find_element(By.ID, "loginbutton").click()
+
+    # # see https://www.testclass.cn/selenium_iframe.html
+    # print("The caller is loading...")
+    # while(not hasElement(browser, caller_xpath)):
+    #     pass
+    # print("The caller is loaded.")
+    # browser.find_element(By.XPATH, caller_xpath).click()
+    # print("Start calling...")
+    # browser.find_element(By.XPATH, call_btn_xpath).click()
+    # print("Waiting for the call to be answered...")
+
+    # if q is pressed, quit
+    while(True):
+        if(input() == 'q'):
+            break
+
     clear()
-    # code = input("Enter code here: ")
-    # browser.find_element(By.ID, "passcode").click()
-    # browser.find_element(By.NAME, "passcode").send_keys(str(code))
-    # sleep(1)
-    # browser.find_element(By.ID, "passcode").click()
-    # sleep(3)
-    # browser.find_element(By.LINK_TEXT, "Plan").click()
-    # # clear current plan
-    # clearClass(browser)
-    # browser.find_element(By.LINK_TEXT, "Add").click()
-    # s = Select(browser.find_element(By.NAME, "College"))
-    # s.select_by_visible_text('CAS')
-    # browser.find_element(
-    #     By.XPATH, "//input[contains(@onclick,'SearchSchedule')]").click()
-    # copy2studentlink(browser, './User/Sam/2022-FALL Sam Info.xls', 'Plan5')
+
     browser.quit()
 
 
-def clear():
+def clear():  # clear screen
     os.system('cls')  # for windows
     os.system('clear')  # for mac/linux
-
-
-def clearClass(browser):  # clear current plan
-    hasRemove = True
-    while (hasRemove):
-        try:
-            browser.find_element(By.LINK_TEXT, "Remove").click()
-        except:
-            hasRemove = False
 
 
 def hasElement(browser, xpath):
@@ -64,85 +67,9 @@ def hasElement(browser, xpath):
     return True
 
 
-def readPrefData(filePath, sheetName):
-    dataList = []
-    book = xlrd.open_workbook(filePath)
-    sheet = book.sheet_by_name(sheetName)
-    rows = sheet.nrows
-    cols = len(sheet.row_slice(0))
-    for r in range(1, rows):
-        data = []
-        for c in range(cols):
-            data.append(sheet.cell_value(r, c))
-        dataList.append(data)
-    return dataList
-
-
-def findNameWeb(browser):
-    element = browser.find_elements(
-        By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[3]")
-    if (element[0].text != ""):
-        name = str(element[0].text)
-        value = 0
-    else:
-        element = browser.find_elements(
-            By.XPATH, "/html/body/form/table[1]/tbody/tr[3]/td[3]")
-        value = 1
-        name = str(element[0].text)
-    if (name == ""):
-        element = browser.find_elements(
-            By.XPATH, "/html/body/form/table[1]/tbody/tr[3]/td[3]")
-        name = str(element[0].text)
-        value = 1
-        print("return value is: ", value, " content is: ", name)
-        return value
-    print("return value is: ", value, " content is: ", name)
-    return value
-
-
-def copy2studentlink(browser, filePath, sheetName):
-    dataList = readPrefData(filePath, sheetName)
-    for i in range(len(dataList)):
-     # read a class info once at a time
-        [col, dep, cour] = dataList[i][9].split(" ")
-        sect = dataList[i][0]
-        # fill out studentlink once at a time
-        try:
-            browser.find_element(By.NAME, "College").clear()
-            browser.find_element(By.NAME, "Dept").clear()
-            browser.find_element(By.NAME, "Course").clear()
-            browser.find_element(By.NAME, "Section").clear()
-            browser.find_element(By.NAME, "College").send_keys(col)
-            browser.find_element(By.NAME, "Dept").send_keys(dep)
-            browser.find_element(By.NAME, "Course").send_keys(cour)
-            browser.find_element(By.NAME, "Section").send_keys(sect)
-            # see https://www.cnpython.com/qa/138943
-            browser.find_element(
-                By.XPATH, "//input[contains(@onclick,'ShowMore')]").click()  # search
-            try:
-                if (findNameWeb(browser) == 1):
-                    # check box at line 2
-                    if (hasElement(browser, "/html/body/form/table[1]/tbody/tr[3]/td[1]/a") == False):
-                        browser.find_element(
-                            By.XPATH, "/html/body/form/table[1]/tbody/tr[3]/td[1]/input").click()
-                    else:
-                        print("The course is blocked: ", col, dep, cour, sect)
-                else:
-                    # check box at line 1
-                    if (hasElement(browser, "/html/body/form/table[1]/tbody/tr[2]/td[1]/a") == False):
-                        browser.find_element(
-                            By.XPATH, "/html/body/form/table[1]/tbody/tr[2]/td[1]/input").click()
-                    else:
-                        print("The course is blocked: ", col, dep, cour, sect)
-                # /html/body/form/table[1]/tbody/tr[3]/td[1]/input
-                print(col, dep, cour, sect, " added")
-            except:
-                print("Can't add course", col, dep, cour, sect)
-        except:
-            print("Can't find course", col, dep, cour, sect)
-    browser.find_element(
-        By.XPATH, "/html/body/form/center[2]/table/tbody/tr/td[1]/input").click()
-
-
 if __name__ == "__main__":
+    # calculate run time
+    start = time.time()
     main()
+    end = time.time()
+    print("Run time: ", end - start)
