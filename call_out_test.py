@@ -7,6 +7,8 @@ from selenium.webdriver.support.ui import Select
 
 caller_xpath = "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div/div/div/div[2]/div/div/div/div/a"
 call_btn_xpath = "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/div/div[1]/span/div"
+download_btn_xpath1 = "/html/body/p/details/summary"
+download_btn_xpath2 = "/html/body/p/details/div/div[1]/a/button"
 
 
 def main():
@@ -15,6 +17,9 @@ def main():
         with open("password_caller.txt", "r") as f:
             myusername = f.readline()
             mypassword = f.readline()
+        if len(myusername) == 0 or len(mypassword) == 0:
+            print("Error: password_caller.txt is not in the correct format.")
+            return
     # if not, ask user to input username and password and save them to password_caller.txt
     else:
         myusername = input("Enter username: ")
@@ -31,6 +36,11 @@ def main():
     # and https://stackoverflow.com/questions/39381088/selenium-python-chrome-open-with-def-options
     options.add_argument("use-fake-device-for-media-stream")
     options.add_argument("use-fake-ui-for-media-stream")
+
+    # see https://www.lambdatest.com/blog/download-file-using-selenium-python/
+    download_directory = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench\\downloads"
+    prefs = {"download.default_directory": download_directory}
+    options.add_experimental_option("prefs", prefs)
 
     browser = webdriver.Chrome(options=options)
 
@@ -54,13 +64,20 @@ def main():
     browser.find_element(By.XPATH, call_btn_xpath).click()
     print("Waiting for the call to be answered...")
 
+    # create a new tab for webrtc-internals and switch to it
+    browser.switch_to.new_window('tab')
+    browser.get("chrome://webrtc-internals")
+    browser.implicitly_wait(1)  # wait for elements to load
+    print("webrtc-internals is loaded.")
+
     # if q is pressed, quit
     while(True):
         if(input() == 'q'):
+            browser.find_element(By.XPATH, download_btn_xpath1).click()
+            browser.find_element(By.XPATH, download_btn_xpath2).click()
+            sleep(3)  # wait for download to finish
             break
-
-    clear()
-
+    # clear()
     browser.quit()
 
 
