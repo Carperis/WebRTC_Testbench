@@ -4,6 +4,7 @@ import time
 from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
+import subprocess
 
 caller_xpath = "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div/div/div/div[2]/div/div/div/div/a"
 call_btn_xpath = "/html/body/div[1]/div/div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/div/div[1]/span/div"
@@ -17,7 +18,9 @@ close_call_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/di
 recall_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div[1]/div/div/div[1]/div/div/div/div[2]/div/div/button"
 
 
-def main():
+def call_out():
+    base_dir = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench"
+    os.chdir(base_dir)
     # check if password_caller.txt exists. if exists, read username and password from it
     if os.path.exists("password_caller.txt"):
         with open("password_caller.txt", "r") as f:
@@ -44,7 +47,7 @@ def main():
     options.add_argument("use-fake-ui-for-media-stream")
 
     # see https://www.lambdatest.com/blog/download-file-using-selenium-python/
-    download_directory = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench\\downloads"
+    download_directory = base_dir + "\\downloads"
     prefs = {"download.default_directory": download_directory}
     options.add_experimental_option("prefs", prefs)
 
@@ -75,6 +78,12 @@ def main():
     print("webrtc-internals page is loaded.")
     rtc_window = browser.current_window_handle
 
+    tshark_dir = "D:\\Wireshark\\tshark"
+    interface = "WLAN"
+    traffic_dir = base_dir + "\\downloads\\captured_traffic_caller.pcapng"
+    command = [tshark_dir, '-i', interface, '-w', traffic_dir]
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
     browser.switch_to.window(contacts_window)
     print("Start calling...")
     browser.find_element(By.XPATH, call_btn_xpath).click()
@@ -125,6 +134,7 @@ def main():
 
     # clear()
     browser.quit()
+    process.terminate()
 
 
 def clear():  # clear screen
@@ -143,6 +153,6 @@ def hasElement(browser, xpath):
 if __name__ == "__main__":
     # calculate run time
     start = time.time()
-    main()
+    call_out()
     end = time.time()
     print("Run time: ", end - start)

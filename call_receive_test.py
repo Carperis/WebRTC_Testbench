@@ -13,7 +13,7 @@ end_call_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/
 recall_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div[1]/div/div/div[1]/div/div/div/div[2]/div/div/button"
 
 
-def main():
+def call_receive():
     # check if password_caller.txt exists. if exists, read username and password from it
     if os.path.exists("password_receiver.txt"):
         with open("password_receiver.txt", "r") as f:
@@ -122,6 +122,6 @@ def hasElement(browser, xpath):
 if __name__ == "__main__":
     # calculate run time
     start = time.time()
-    main()
+    call_receive()
     end = time.time()
     print("Run time: ", end - start)
