@@ -5,6 +5,8 @@ from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
+timeout = 10  # set timeout to 10 seconds
+
 receive_btn_xpath = "/html/body/div[4]/div[1]/div/div[2]/div/div/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div[1]/div/div"
 download_btn_xpath1 = "/html/body/p/details/summary"
 download_btn_xpath2 = "/html/body/p/details/div/div[1]/a/button"
@@ -70,8 +72,8 @@ def call_receive():
     start = time.time()
     while(not hasElement(browser, receive_btn_xpath)):
         end = time.time()
-        if((end - start) > 10):
-            print("The call is not received for 10 seconds.")
+        if((end - start) > timeout):
+            print("The call is not received for" + str(timeout) +"seconds.")
             browser.quit()
             return
     browser.find_element(By.XPATH, receive_btn_xpath).click()
@@ -91,7 +93,7 @@ def call_receive():
               str(end - start) + " seconds.", end="\r")
         # if q is pressed or 10 seconds have passed, quit the program
         hasRecall = hasElement(browser, recall_btn_xpath)
-        if(((end - start) > 10) or hasRecall):
+        if(((end - start) > timeout) or hasRecall):
             if(not hasRecall):
                 browser.find_element(By.XPATH, end_call_btn_xpath).click()
             print("\nThe call is ended.")
