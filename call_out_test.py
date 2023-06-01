@@ -104,6 +104,7 @@ def call_out():
         pass
     print("Waiting for the call to be answered...")
     browser.implicitly_wait(1)  # wait for elements to load
+    
     start = time.time()
     while(hasElement(browser, waiting_sign_xpath)):
         end = time.time()
