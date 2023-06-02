@@ -5,6 +5,7 @@ from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 import subprocess
+import shutil
 
 app_link = "https://www.messenger.com/login/"
 
@@ -76,7 +77,7 @@ def call_out_init(browser, caller_window, call_btn_xpath, receiver_name_xpath):
     browser.find_element(By.XPATH, call_btn_xpath).click()
     windows = browser.window_handles
     call_window = windows[2]  # record the popup window
-    
+
     browser.switch_to.window(call_window)
     # wait for the call window to be fully loaded
     while (not hasElement(browser, receiver_name_xpath)):
@@ -114,7 +115,7 @@ def call_control(browser, call_duration, call_window, receiver_icon_xpath, recal
     while (not hasElement(browser, receiver_icon_xpath)):  # wait for the call box to be fully loaded
         pass
     print("The call is answered.")
-    
+
     start = time.time()
     while (True):
         end = time.time()
@@ -206,19 +207,22 @@ if __name__ == "__main__":
     recall_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div[1]/div/div/div[1]/div/div/div/div[2]/div/div/button"
 
     tshark_dir = "D:\\Wireshark\\tshark"
-    base_dir = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench"
-    download_dir = base_dir + "\\downloads"
+    # base_dir = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench"
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # get the current directory
+    download_dir = base_dir + "\\data"
     dump_name = "\\webrtc_dump_caller.txt"
-    traffic_dir = base_dir + "\\downloads\\captured_traffic_caller.pcapng"
+    traffic_dir = download_dir + "\\captured_traffic_caller.pcapng"
 
     start = time.time()
 
+    shutil.rmtree(download_dir, ignore_errors=True)  # delete the download folder
+    os.mkdir(download_dir)  # create a new download folder
     browser = browser_init(download_dir)
     caller_window = app_init(browser, receiver_tab_xpath)
     rtc_window = webrtc_internals_init(browser)
     process = tshark_init(tshark_dir, interface, traffic_dir)
     call_window = call_out_init(browser, caller_window,
-                            call_btn_xpath, receiver_name_xpath)
+                                call_btn_xpath, receiver_name_xpath)
     if ((not is_call_timeout(browser, timeout, call_window, waiting_sign_xpath)) and (not is_call_refused(browser, call_window, close_call_btn_xpath))):
         call_control(browser, call_duration, call_window,
                      receiver_icon_xpath, recall_btn_xpath, end_call_btn_xpath)

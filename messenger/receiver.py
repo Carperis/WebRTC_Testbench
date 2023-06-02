@@ -5,6 +5,7 @@ from time import sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 import subprocess
+import shutil
 
 app_link = "https://www.messenger.com/login/"
 
@@ -186,20 +187,23 @@ if __name__ == "__main__":
     recall_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div[1]/div/div/div[1]/div/div/div/div[2]/div/div/button"
 
     tshark_dir = "D:\\Wireshark\\tshark"
-    base_dir = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench"
-    download_dir = base_dir + "\\downloads"
+    # base_dir = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench"
+    base_dir = os.path.dirname(os.path.abspath(__file__)) # get the current directory
+    download_dir = base_dir + "\\data"
     dump_name = "\\webrtc_dump_receiver.txt"
-    traffic_dir = base_dir + "\\downloads\\captured_traffic_receiver.pcapng"
+    traffic_dir = download_dir + "\\captured_traffic_receiver.pcapng"
     
     start = time.time()
 
+    shutil.rmtree(download_dir, ignore_errors=True)  # delete the download folder
+    os.mkdir(download_dir)  # create a new download folder
     browser = browser_init(download_dir)
     receiver_window = app_init(browser, caller_tab_xpath)
     rtc_window = webrtc_internals_init(browser)
     process = tshark_init(tshark_dir, interface, traffic_dir)
     if (is_call_received(browser, receiver_window, receive_btn_xpath, timeout)):
         call_control(browser, call_duration, receive_btn_xpath, caller_icon_xpath, recall_btn_xpath, end_call_btn_xpath)
-        # sleep(5)
+        sleep(5)
         terminate_call_success(browser, process, rtc_window, download_btn_xpath1,
                                download_btn_xpath2, download_dir, dump_name)
     else:
