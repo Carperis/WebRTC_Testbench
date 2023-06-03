@@ -1,3 +1,5 @@
+# Need to run vscode or cmd as administrator
+
 import subprocess
 
 ip_address = input("Enter the remote IP address to unblock: ")
