@@ -50,36 +50,38 @@ def unpack_dump(file_name):
 
     return candidateID_dict
 
+if __name__ == "__main__":
+    # file_name_caller = "webrtc_dump_caller.txt"
+    # file_name_receiver = "webrtc_dump_receiver.txt"
+    file_name_caller = "Dump Host.txt"
+    file_name_receiver = "Dump Peer.txt"
+    file_names = [file_name_caller, file_name_receiver]
+    location_names = ["caller", "receiver"]
 
-file_name_caller = "webrtc_dump_caller.txt"
-file_name_receiver = "webrtc_dump_receiver.txt"
-file_names = [file_name_caller, file_name_receiver]
-location_names = ["caller", "receiver"]
+    ip_dict = {}
+    for i in range(2):
+        location_name1 = location_names[i]
+        location_name2 = location_names[1-i]
+        file_name = file_names[i]
+        candidateID_dict = unpack_dump(base_dir + "\\inputs\\" + file_name)
+        for key in candidateID_dict.keys():
+            if (len(candidateID_dict[key]["address"]) != 0):
+                new_key = candidateID_dict[key]["address"] + ":" + str(candidateID_dict[key]["port"])
+                ip_dict[new_key] = {}
+                ip_dict[new_key]["type"] = candidateID_dict[key]["type"]
+                if (candidateID_dict[key]["location"] == "local"):
+                    ip_dict[new_key]["location"] = location_name1
+                else:  
+                    ip_dict[new_key]["location"] = location_name2
 
-ip_dict = {}
-for i in range(2):
-    location_name1 = location_names[i]
-    location_name2 = location_names[1-i]
-    file_name = file_names[i]
-    candidateID_dict = unpack_dump(base_dir + "\\" + file_name)
-    for key in candidateID_dict.keys():
-        if (len(candidateID_dict[key]["address"]) != 0):
-            new_key = candidateID_dict[key]["address"] + ":" + str(candidateID_dict[key]["port"])
-            ip_dict[new_key] = {}
-            ip_dict[new_key]["type"] = candidateID_dict[key]["type"]
-            if (candidateID_dict[key]["location"] == "local"):
-                ip_dict[new_key]["location"] = location_name1
-            else:  
-                ip_dict[new_key]["location"] = location_name2
+    print(ip_dict)
 
-# print(ip_dict)
+    import pandas as pd
 
-import pandas as pd
+    # Convert dictionary to pandas DataFrame
+    df = pd.DataFrame.from_dict(ip_dict, orient='index')
 
-# Convert dictionary to pandas DataFrame
-df = pd.DataFrame.from_dict(ip_dict, orient='index')
-
-# Save DataFrame to Excel
-df.to_excel(base_dir +  "\\" + 'output.xlsx', index_label='Keys')
+    # Save DataFrame to Excel
+    df.to_excel(base_dir +  "\\outputs\\" + 'ip info.xlsx', index_label='Keys')
     
 
