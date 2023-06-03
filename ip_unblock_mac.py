@@ -1,3 +1,5 @@
+# need to run with "sudo python3 ip_unblock_mac.py"
+
 import os
 
 # Read the contents of the file into a list

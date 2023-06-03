@@ -1,3 +1,5 @@
+# need to run with "sudo python3 ip_block_mac.py"
+
 import os
 
 ip = input('Enter the remote IP address to block: ')
