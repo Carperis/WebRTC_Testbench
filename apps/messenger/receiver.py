@@ -39,7 +39,8 @@ def app_init(browser, caller_tab_xpath):  # initialize the app
             f.write(mypassword + "\n")
 
     browser.get(app_link)  # open the app
-    browser.implicitly_wait(1)  # wait for elements to load
+    sleep(3)
+    browser.implicitly_wait(3)  # wait for elements to load
     browser.find_element(By.ID, "email").send_keys(myusername)
     browser.find_element(By.ID, "pass").send_keys(mypassword)
     browser.find_element(By.ID, "loginbutton").click()
