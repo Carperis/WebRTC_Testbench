@@ -1,17 +1,21 @@
-import sys
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import os
 
-def identify_os():
-    if sys.platform.startswith('win'):
-        return 'Windows'
-    elif sys.platform.startswith('darwin'):
-        return 'Mac OS'
-    elif sys.platform.startswith('linux'):
-        return 'Linux'
-    else:
-        return 'Unknown'
+base_dir = os.path.dirname(os.path.abspath(
+    __file__))  # get the current directory
+download_dir = base_dir + "\\data"
 
-# Identify the operating system
-os = identify_os()
-
-# Display the result
-print(f"Operating System: {os}")
+options = webdriver.FirefoxOptions()
+options.page_load_strategy = 'eager'  # "eager" for faster loading
+options.set_preference("media.navigator.streams.fake", True)
+options.set_preference("browser.download.folderList", 2)
+options.set_preference("browser.download.folderList", 2)
+options.set_preference("browser.download.manager.showWhenStarting", False)
+options.set_preference("browser.download.dir", download_dir)
+options.set_preference(
+    "browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
+# prefs = {"download.default_directory": download_dir}
+# options.add_experimental_option("prefs", prefs)
+browser = webdriver.Firefox(options=options)
+browser.get("https://www.messenger.com/login/")
