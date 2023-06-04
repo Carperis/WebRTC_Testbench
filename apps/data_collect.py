@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import subprocess
 import shutil
 import sys
-import netifaces
+import psutil
 
 
 def browser_init(download_dir):  # initialize the browser
@@ -85,15 +85,21 @@ def identify_os():
     else:
         return 'Unknown'
 
-def get_active_interface():
-    gateways = netifaces.gateways()
-    default_gateway = gateways['default']
+def get_most_active_interface():
+    interfaces = psutil.net_io_counters(pernic=True)
+    most_active_interface = None
+    max_bytes_sent = 0
 
-    for interface, details in default_gateway.items():
-        if details[1] is not None:
-            return details[1]
-
-    return None
+    for interface, stats in interfaces.items():
+        bytes_sent = stats.bytes_sent
+        bytes_recv = stats.bytes_recv
+        if (bytes_sent == bytes_recv):
+            continue
+        if (bytes_sent > max_bytes_sent):
+            max_bytes_sent = bytes_sent
+            most_active_interface = interface
+            
+    return most_active_interface
 
 if __name__ == "__main__":
     download_btn_xpath1 = "/html/body/p/details/summary"
