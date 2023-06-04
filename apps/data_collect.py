@@ -105,9 +105,18 @@ def get_most_active_interface():
 
 
 if __name__ == "__main__":
+    ans = input("Select your role (1: caller / 2: receiver): ")
+    while (ans != '1' and ans != '2'):
+        ans = input("Select your role (1: caller / 2: receiver): ")
+    if (ans == '1'):
+        print("You are the caller.")
+        role = "caller"
+    else:
+        print("You are the receiver.")
+        role = "receiver"
+    
     download_btn_xpath1 = "/html/body/p/details/summary"
     download_btn_xpath2 = "/html/body/p/details/div/div[1]/a/button"
-
     if (identify_os() == 'Windows'):
         tshark_dir = "D:\\Wireshark\\tshark"
         divider = "\\"
@@ -118,8 +127,8 @@ if __name__ == "__main__":
         __file__))  # get the current directory
     download_dir = base_dir + divider + "data"
     old_dump_name = divider + "webrtc_internals_dump.txt"
-    new_dump_name = divider + "dump.txt"
-    traffic_dir = download_dir + divider + "packets.pcapng"
+    new_dump_name = divider + "dump_" + role + ".txt"
+    traffic_dir = download_dir + divider + "packets_" + role + ".pcapng"
 
     interface = get_most_active_interface()
     if interface is None:
@@ -139,5 +148,6 @@ if __name__ == "__main__":
     ans = input("Enter q if the call is end: ")
     while (ans != 'q'):
         ans = input("Enter q if the call is end: ")
+        
     terminate_call(browser, process, rtc_window, download_btn_xpath1,
                    download_btn_xpath2, download_dir, new_dump_name, old_dump_name)
