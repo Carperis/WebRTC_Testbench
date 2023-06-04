@@ -12,9 +12,9 @@ import psutil
 
 def browser_init(download_dir):  # initialize the browser
     options = webdriver.ChromeOptions()
-    # options.page_load_strategy = 'eager'  # "eager" for faster loading
-    # options.add_argument("use-fake-device-for-media-stream")
-    # options.add_argument("use-fake-ui-for-media-stream")
+    options.page_load_strategy = 'eager'  # "eager" for faster loading
+    options.add_argument("use-fake-device-for-media-stream")
+    options.add_argument("use-fake-ui-for-media-stream")
     prefs = {"download.default_directory": download_dir}
     options.add_experimental_option("prefs", prefs)
     browser = webdriver.Chrome(options=options)
@@ -85,6 +85,7 @@ def identify_os():
     else:
         return 'Unknown'
 
+
 def get_most_active_interface():
     interfaces = psutil.net_io_counters(pernic=True)
     most_active_interface = None
@@ -98,8 +99,9 @@ def get_most_active_interface():
         if (bytes_sent > max_bytes_sent):
             max_bytes_sent = bytes_sent
             most_active_interface = interface
-            
+
     return most_active_interface
+
 
 if __name__ == "__main__":
     download_btn_xpath1 = "/html/body/p/details/summary"
@@ -131,9 +133,10 @@ if __name__ == "__main__":
     rtc_window = webrtc_internals_init(browser)
     process = tshark_init(tshark_dir, interface, traffic_dir)
     browser.switch_to.window(app_window)
-    print("Ready to collect call data...")
+    print("Ready to collect call data...\n")
 
-    while (input("Enter q if the call is end: ") != 'q'):
-        pass
+    ans = input("Enter q if the call is end: ")
+    while (ans != 'q'):
+        ans = input("Enter q if the call is end: ")
     terminate_call(browser, process, rtc_window, download_btn_xpath1,
                    download_btn_xpath2, download_dir, new_dump_name, old_dump_name)
