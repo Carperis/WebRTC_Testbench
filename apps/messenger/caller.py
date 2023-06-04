@@ -202,7 +202,7 @@ def identify_os():
 
 
 if __name__ == "__main__":
-    timeout = 15  # set timeout
+    timeout = 20  # set timeout
     call_duration = 10  # set call duration
     call_success = False
     interface = "WLAN"
