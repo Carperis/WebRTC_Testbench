@@ -8,17 +8,32 @@ import subprocess
 import shutil
 import sys
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 app_link = "https://www.messenger.com/login/"
 
 
+# def browser_init(download_dir):  # initialize the browser
+#     options = webdriver.ChromeOptions()
+#     options.page_load_strategy = 'eager'  # "eager" for faster loading
+#     options.add_argument("use-fake-device-for-media-stream")
+#     options.add_argument("use-fake-ui-for-media-stream")
+#     prefs = {"download.default_directory": download_dir}
+#     options.add_experimental_option("prefs", prefs)
+#     browser = webdriver.Chrome(options=options)
+#     return browser
+
 def browser_init(download_dir):  # initialize the browser
-    options = webdriver.ChromeOptions()
+    options = webdriver.FirefoxOptions()
     options.page_load_strategy = 'eager'  # "eager" for faster loading
-    options.add_argument("use-fake-device-for-media-stream")
-    options.add_argument("use-fake-ui-for-media-stream")
-    prefs = {"download.default_directory": download_dir}
-    options.add_experimental_option("prefs", prefs)
-    browser = webdriver.Chrome(options=options)
+    options.set_preference("media.navigator.streams.fake", True)
+    options.set_preference("browser.download.folderList", 2)
+    options.set_preference("browser.download.manager.showWhenStarting", False)
+    options.set_preference("browser.download.dir", download_dir)
+    options.set_preference(
+        "browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
+    browser = webdriver.Firefox(options=options)
     return browser
 
 
@@ -41,6 +56,10 @@ def app_init(browser, caller_tab_xpath):  # initialize the app
 
     browser.get(app_link)  # open the app
     browser.implicitly_wait(1)  # wait for elements to load
+    
+    wait = WebDriverWait(browser, 10)
+    email_input = wait.until(EC.visibility_of_element_located((By.ID, "email")))
+    
     browser.find_element(By.ID, "email").send_keys(myusername)
     browser.find_element(By.ID, "pass").send_keys(mypassword)
     browser.find_element(By.ID, "loginbutton").click()
