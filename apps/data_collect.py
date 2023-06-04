@@ -133,6 +133,7 @@ if __name__ == "__main__":
     browser.switch_to.window(app_window)
     print("Ready to collect call data...")
 
-    input("Press Enter if the call is end: ")
+    while (input("Enter q if the call is end: ") != 'q'):
+        pass
     terminate_call(browser, process, rtc_window, download_btn_xpath1,
                    download_btn_xpath2, download_dir, new_dump_name, old_dump_name)
