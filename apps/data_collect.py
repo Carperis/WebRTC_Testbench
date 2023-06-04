@@ -13,6 +13,7 @@ import psutil
 def browser_init(download_dir):  # initialize the browser
     options = webdriver.ChromeOptions()
     options.page_load_strategy = 'eager'  # "eager" for faster loading
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_argument("use-fake-device-for-media-stream")
     options.add_argument("use-fake-ui-for-media-stream")
     prefs = {"download.default_directory": download_dir}
