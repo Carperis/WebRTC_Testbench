@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 import subprocess
 import shutil
+import sys
 
 app_link = "https://www.messenger.com/login/"
 
@@ -172,6 +173,17 @@ def tshark_terminate(process):
         return False
 
 
+def identify_os():
+    if sys.platform.startswith('win'):
+        return 'Windows'
+    elif sys.platform.startswith('darwin'):
+        return 'Mac OS'
+    elif sys.platform.startswith('linux'):
+        return 'Linux'
+    else:
+        return 'Unknown'
+
+
 if __name__ == "__main__":
     timeout = 15  # set timeout
     call_duration = 10  # set call duration
@@ -186,23 +198,28 @@ if __name__ == "__main__":
     end_call_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div[1]/div/div/div/div/div[1]/div/div/div[3]/div/div[1]/div[2]/div/div/div[2]/div[5]/span/div/div/div"
     recall_btn_xpath = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div[1]/div/div/div[1]/div/div/div/div[2]/div/div/button"
 
-    tshark_dir = "D:\\Wireshark\\tshark"
-    # base_dir = "C:\\Users\\Sam\\Desktop\\WebRTC_Testbench"
-    base_dir = os.path.dirname(os.path.abspath(__file__)) # get the current directory
+    if (identify_os() == 'Windows'):
+        tshark_dir = "D:\\Wireshark\\tshark"
+    elif (identify_os() == 'Mac OS'):
+        tshark_dir = "tshark"
+    base_dir = os.path.dirname(os.path.abspath(
+        __file__))  # get the current directory
     download_dir = base_dir + "\\data"
     dump_name = "\\webrtc_dump_receiver.txt"
     traffic_dir = download_dir + "\\captured_traffic_receiver.pcapng"
-    
+
     start = time.time()
 
-    shutil.rmtree(download_dir, ignore_errors=True)  # delete the download folder
+    # delete the download folder
+    shutil.rmtree(download_dir, ignore_errors=True)
     os.mkdir(download_dir)  # create a new download folder
     browser = browser_init(download_dir)
     receiver_window = app_init(browser, caller_tab_xpath)
     rtc_window = webrtc_internals_init(browser)
     process = tshark_init(tshark_dir, interface, traffic_dir)
     if (is_call_received(browser, receiver_window, receive_btn_xpath, timeout)):
-        call_control(browser, call_duration, receive_btn_xpath, caller_icon_xpath, recall_btn_xpath, end_call_btn_xpath)
+        call_control(browser, call_duration, receive_btn_xpath,
+                     caller_icon_xpath, recall_btn_xpath, end_call_btn_xpath)
         sleep(5)
         terminate_call_success(browser, process, rtc_window, download_btn_xpath1,
                                download_btn_xpath2, download_dir, dump_name)
