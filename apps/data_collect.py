@@ -7,13 +7,14 @@ from selenium.webdriver.support import expected_conditions as EC
 import subprocess
 import shutil
 import sys
+import netifaces
 
 
 def browser_init(download_dir):  # initialize the browser
     options = webdriver.ChromeOptions()
-    options.page_load_strategy = 'eager'  # "eager" for faster loading
-    options.add_argument("use-fake-device-for-media-stream")
-    options.add_argument("use-fake-ui-for-media-stream")
+    # options.page_load_strategy = 'eager'  # "eager" for faster loading
+    # options.add_argument("use-fake-device-for-media-stream")
+    # options.add_argument("use-fake-ui-for-media-stream")
     prefs = {"download.default_directory": download_dir}
     options.add_experimental_option("prefs", prefs)
     browser = webdriver.Chrome(options=options)
@@ -44,15 +45,14 @@ def tshark_init(tshark_dir, interface, traffic_dir):
     return process
 
 
-def terminate_call(browser, process, rtc_window, download_btn_xpath1, download_btn_xpath2, download_dir, dump_name):
+def terminate_call(browser, process, rtc_window, download_btn_xpath1, download_btn_xpath2, download_dir, new_dump_name, old_dump_name):
     browser.switch_to.window(rtc_window)
     browser.find_element(By.XPATH, download_btn_xpath1).click()
     browser.find_element(By.XPATH, download_btn_xpath2).click()
     sleep(3)  # wait for download to finish
     print("The dump file is downloaded.")
-    os.rename(download_dir + "\\webrtc_internals_dump.txt",
-              download_dir + dump_name)
-
+    os.rename(download_dir + old_dump_name,
+              download_dir + new_dump_name)
     if (tshark_terminate(process)):
         print("The captured traffic is saved.")
     else:
@@ -85,6 +85,15 @@ def identify_os():
     else:
         return 'Unknown'
 
+def get_active_interface():
+    gateways = netifaces.gateways()
+    default_gateway = gateways['default']
+
+    for interface, details in default_gateway.items():
+        if details[1] is not None:
+            return details[1]
+
+    return None
 
 if __name__ == "__main__":
     download_btn_xpath1 = "/html/body/p/details/summary"
@@ -92,15 +101,21 @@ if __name__ == "__main__":
 
     if (identify_os() == 'Windows'):
         tshark_dir = "D:\\Wireshark\\tshark"
+        divider = "\\"
     elif (identify_os() == 'Mac OS'):
         tshark_dir = "tshark"
+        divider = "/"
     base_dir = os.path.dirname(os.path.abspath(
         __file__))  # get the current directory
-    download_dir = base_dir + "\\data"
-    dump_name = "\\dump.txt"
-    traffic_dir = download_dir + "\\packets.pcapng"
+    download_dir = base_dir + divider + "data"
+    old_dump_name = divider + "webrtc_internals_dump.txt"
+    new_dump_name = divider + "dump.txt"
+    traffic_dir = download_dir + divider + "packets.pcapng"
 
-    interface = "WLAN"
+    interface = get_active_interface()
+    if interface is None:
+        print("No active interface found.")
+        exit(1)
     app_link = "https://www.messenger.com/login/"
 
     shutil.rmtree(download_dir, ignore_errors=True)
@@ -114,4 +129,4 @@ if __name__ == "__main__":
 
     input("Press Enter if the call is end: ")
     terminate_call(browser, process, rtc_window, download_btn_xpath1,
-                   download_btn_xpath2, download_dir, dump_name)
+                   download_btn_xpath2, download_dir, new_dump_name, old_dump_name)
