@@ -34,7 +34,7 @@ def unblock_ip_mac(ip):
 def unblock_ip_win(ip):
     try:
         # Execute netsh command to add a firewall rule
-        command = f"netsh advfirewall firewall delete rule name=\"BLOCK IP ADDRESS - {ip}\" remoteip={ip_address}"
+        command = f"netsh advfirewall firewall delete rule name=\"BLOCK IP ADDRESS - {ip}\" remoteip={ip}"
         subprocess.run(command, shell=True, check=True)
         print(f"Blocked traffic to {ip}")
     except subprocess.CalledProcessError as e:

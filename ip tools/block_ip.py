@@ -23,7 +23,7 @@ def block_ip_mac(ip):
 def block_ip_win(ip):
     try:
         # Execute netsh command to add a firewall rule
-        command = f"netsh advfirewall firewall add rule name=\"BLOCK IP ADDRESS - {ip}\" dir=out action=block remoteip={ip_address}"
+        command = f"netsh advfirewall firewall add rule name=\"BLOCK IP ADDRESS - {ip}\" dir=out action=block remoteip={ip}"
         subprocess.run(command, shell=True, check=True)
         print(f"Blocked traffic to {ip}")
     except subprocess.CalledProcessError as e:
