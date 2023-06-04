@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 base_dir = os.path.dirname(os.path.abspath(__file__)) # get the current directory
 
@@ -50,11 +51,26 @@ def unpack_dump(file_name):
 
     return candidateID_dict
 
+def identify_os():
+    if sys.platform.startswith('win'):
+        return 'Windows'
+    elif sys.platform.startswith('darwin'):
+        return 'Mac OS'
+    elif sys.platform.startswith('linux'):
+        return 'Linux'
+    else:
+        return 'Unknown'
+    
 if __name__ == "__main__":
+    if (identify_os() == 'Windows'):
+        divider = "\\"
+    elif (identify_os() == 'Mac OS'):
+        divider = "/"
+    
     # file_name_caller = "webrtc_dump_caller.txt"
     # file_name_receiver = "webrtc_dump_receiver.txt"
-    file_name_caller = "Dump Host.txt"
-    file_name_receiver = "Dump Peer.txt"
+    file_name_caller = "dump_caller.txt"
+    file_name_receiver = "dump_receiver.txt"
     file_names = [file_name_caller, file_name_receiver]
     location_names = ["caller", "receiver"]
 
@@ -63,7 +79,7 @@ if __name__ == "__main__":
         location_name1 = location_names[i]
         location_name2 = location_names[1-i]
         file_name = file_names[i]
-        candidateID_dict = unpack_dump(base_dir + "\\inputs\\" + file_name)
+        candidateID_dict = unpack_dump(base_dir + divider + "inputs" + divider + file_name)
         for key in candidateID_dict.keys():
             if (len(candidateID_dict[key]["address"]) != 0):
                 new_key = candidateID_dict[key]["address"] + ":" + str(candidateID_dict[key]["port"])
@@ -74,7 +90,7 @@ if __name__ == "__main__":
                 else:  
                     ip_dict[new_key]["location"] = location_name2
 
-    print(ip_dict)
+    # print(ip_dict)
 
     import pandas as pd
 
@@ -82,6 +98,6 @@ if __name__ == "__main__":
     df = pd.DataFrame.from_dict(ip_dict, orient='index')
 
     # Save DataFrame to Excel
-    df.to_excel(base_dir +  "\\outputs\\" + 'ip info.xlsx', index_label='Keys')
+    df.to_excel(base_dir +  divider + "outputs" + divider + 'ip info.xlsx', index_label='Keys')
     
 
