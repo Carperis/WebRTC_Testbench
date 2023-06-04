@@ -9,7 +9,7 @@ def perform_ping_test(host):
     for line in result.stdout:
         count += 1
         if (count >= 3):
-            print(">>>" + line.strip())
+            print(">>> " + line.strip())
             if ("timeout" in line or "failure" in line):
                 result.terminate()
                 return False
