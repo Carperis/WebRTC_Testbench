@@ -118,7 +118,7 @@ if __name__ == "__main__":
     new_dump_name = divider + "dump.txt"
     traffic_dir = download_dir + divider + "packets.pcapng"
 
-    interface = get_active_interface()
+    interface = get_most_active_interface()
     if interface is None:
         print("No active interface found.")
         exit(1)
