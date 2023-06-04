@@ -43,7 +43,7 @@ def app_init(browser, caller_tab_xpath):  # initialize the app
     browser.implicitly_wait(1)  # wait for elements to load
     browser.find_element(By.ID, "email").send_keys(myusername)
     browser.find_element(By.ID, "pass").send_keys(mypassword)
-    # browser.find_element(By.ID, "loginbutton").click()
+    browser.find_element(By.ID, "loginbutton").click()
     receiver_window = browser.current_window_handle
     print("Loading receiver page...")
     while (not hasElement(browser, caller_tab_xpath)):
