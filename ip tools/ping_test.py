@@ -18,7 +18,7 @@ def perform_ping_test(host):
                 return True
 
 # Perform the ping test
-host = '8.8.8.8'
+host = input("Enter the remote IP address to ping: ")
 ping_success = perform_ping_test(host)
 
 # Display the result
