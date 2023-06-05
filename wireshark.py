@@ -28,7 +28,7 @@ def analyze_turn_packets(pcap_file, tshark_dir):
     capture.close()
 
 
-with open('tshark_path.txt', 'r') as file:
+with open('tshark_location.txt', 'r') as file:
     tshark_dir = file.read()
 
 # Provide the path to your pcapng file

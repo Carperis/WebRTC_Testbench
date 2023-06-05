@@ -118,7 +118,7 @@ if __name__ == "__main__":
     download_btn_xpath1 = "/html/body/p/details/summary"
     download_btn_xpath2 = "/html/body/p/details/div/div[1]/a/button"
     if (identify_os() == 'Windows'):
-        with open('tshark_path.txt', 'r') as file:
+        with open('tshark_location.txt', 'r') as file:
             tshark_dir = file.read()
         divider = "\\"
     elif (identify_os() == 'Mac OS'):
