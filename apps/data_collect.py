@@ -40,8 +40,7 @@ def webrtc_internals_init(browser):  # initialize the webrtc-internals page
 
 def tshark_init(tshark_dir, interface, traffic_dir):
     command = [tshark_dir, '-i', interface, '-w', traffic_dir]
-    process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print("Start tshark process...")
     return process
 
@@ -119,7 +118,7 @@ if __name__ == "__main__":
     download_btn_xpath2 = "/html/body/p/details/div/div[1]/a/button"
     if (identify_os() == 'Windows'):
         with open('tshark_location.txt', 'r') as file:
-            tshark_dir = file.read()
+            tshark_dir = file.read().strip()
         divider = "\\"
     elif (identify_os() == 'Mac OS'):
         tshark_dir = "tshark"
