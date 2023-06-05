@@ -39,11 +39,14 @@ def identify_os():
         return 'Linux'
     else:
         return 'Unknown'
-
-
-if __name__ == "__main__":
-    ip = input('Enter the remote IP address to block: ')
+    
+def block_ip(ip):
     if (identify_os() == 'Windows'):
         block_ip_win(ip)
     elif (identify_os() == 'Mac OS'):
         block_ip_mac(ip)
+
+
+if __name__ == "__main__":
+    ip = input('Enter the remote IP address to block: ')
+    block_ip(ip)

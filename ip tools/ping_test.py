@@ -17,13 +17,14 @@ def perform_ping_test(host):
                 result.terminate()
                 return True
 
-# Perform the ping test
-host = input("Enter the remote IP address to ping: ")
-ping_success = perform_ping_test(host)
+if __name__ == "__main__":
+    # Perform the ping test
+    host = input("Enter the remote IP address to ping: ")
+    ping_success = perform_ping_test(host)
 
-# Display the result
-if ping_success:
-    print(f"Ping test to {host} was successful!")
-else:
-    print(f"Ping test to {host} failed.")
+    # Display the result
+    if ping_success:
+        print(f"Ping test to {host} was successful!")
+    else:
+        print(f"Ping test to {host} failed.")
 

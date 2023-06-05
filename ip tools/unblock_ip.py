@@ -50,11 +50,14 @@ def identify_os():
         return 'Linux'
     else:
         return 'Unknown'
-
-
-if __name__ == "__main__":
-    ip = input('Enter the remote IP address to unblock: ')
+    
+def unblock_ip(ip):
     if (identify_os() == 'Windows'):
         unblock_ip_win(ip)
     elif (identify_os() == 'Mac OS'):
         unblock_ip_mac(ip)
+
+
+if __name__ == "__main__":
+    ip = input('Enter the remote IP address to unblock: ')
+    unblock_ip(ip)
