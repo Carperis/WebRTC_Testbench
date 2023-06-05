@@ -6,7 +6,7 @@ import time
 import threading
 import os
 
-max_time = 10 # seconds
+max_time = 100 # seconds
 local_ip = get_local_ip.get_local_ip()
 ip = input('Enter the remote IP address to block: ')
 print("\n[Test IP 1]----------------------------------------\n")
