@@ -1,10 +1,2 @@
-os
 selenium
-time
-subprocess
-shutil
-sys
-psutil
-socket
-json
 pandas
