@@ -1,2 +1,2 @@
-caller is kutousam@gmail.com on Wi-Fi
-receiver is samqiupeng@hotmail.com on cellular network
+caller is a Windows PC using kutousam@gmail.com on Wi-Fi
+receiver is a Macbook using samqiupeng@hotmail.com on cellular network
