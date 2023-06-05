@@ -6,7 +6,7 @@ def analyze_turn_packets(pcap_file, tshark_dir):
 
     # Filter packets to include only TURN protocol packets
     capture.apply_on_packets(
-        lambda pkt: pkt.transport_layer == 'UDP' and 'STUN' in pkt.layers)
+        lambda pkt: pkt.transport_layer == 'UDP' and 'TURN' in pkt.layers)
 
     # Analyze each packet
     for packet in capture:
