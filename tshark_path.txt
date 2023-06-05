@@ -1,1 +1,1 @@
-D:\Wireshark\tshark
+C:\Program Files\Wireshark\tshark.exe
