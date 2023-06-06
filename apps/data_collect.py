@@ -134,7 +134,7 @@ if __name__ == "__main__":
     if interface is None:
         print("No active interface found.")
         exit(1)
-    app_link = "https://www.messenger.com/login/"
+    app_link = "https://discord.com/channels/@me"
 
     shutil.rmtree(download_dir, ignore_errors=True)
     os.mkdir(download_dir)  # create a new download folder
