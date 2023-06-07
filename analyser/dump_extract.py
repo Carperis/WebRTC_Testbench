@@ -32,16 +32,18 @@ def unpack_dump(file_name):
                                 "port": "", "location": "", "type": ""}
 
     for key in stats.keys():
-        if ("-address" in key):
+        if ("-address" in key or "-relatedAddress" in key):
             id = key.split("-")[0]
             list_str = stats[key]['values']
             candidateID_dict[id]["address"] = json.loads(list_str)[0]
             candidateID_dict[id]["location"] = stats[key]['statsType'].split(
                 "-")[0]
-        elif ("-port" in key):
+        elif ("-port" in key or "-relatedPort" in key):
             id = key.split("-")[0]
             list_str = stats[key]['values']
             candidateID_dict[id]["port"] = json.loads(list_str)[0]
+            if ("-relatedPort" in key):
+                candidateID_dict[id]["port"] = str(json.loads(list_str)[0]) + " (related)"
         elif ("-candidateType" in key):
             id = key.split("-")[0]
             list_str = stats[key]['values']
