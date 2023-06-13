@@ -75,15 +75,26 @@ def extract_icecandidate(json_data):
             sdpMid_list.append(find_media_kind(text))
         elif (info_dict["type"] == "icecandidate"):
             sdpMid = find_media_num(text)
-            ipv4_addr = find_ipv4(text)
-            ipv6_addr = find_ipv6(text)
-            if (len(ipv4_addr) >= 1):
-                ip = ipv4_addr[0]
-            elif (len(ipv6_addr) >= 1):
-                ip = ipv6_addr[0]
-            ip = ip[0] + "_" + ip[1]
+            subtext = text.split("typ")[0]
+            
+            # ipv4_addr = find_ipv4(subtext)
+            # ipv6_addr = find_ipv6(subtext)
+            # if (len(ipv4_addr) >= 1):
+            #     ip = ipv4_addr
+            # elif (len(ipv6_addr) >= 1):
+            #     ip = ipv6_addr
+            # ip = ip[0] + "_" + ip[1]
+            
+            subsubtext = subtext.split(" ")
+            addr = subsubtext[len(subsubtext)-3]
+            port = subsubtext[len(subsubtext)-2]
+            ip = addr + "_" + port
+            
             ice_dict[ip] = {}
-            ice_dict[ip]["media"] = str(sdpMid) + "_" + sdpMid_list[sdpMid]
+            try:
+                ice_dict[ip]["media"] = str(sdpMid) + "_" + sdpMid_list[sdpMid]
+            except:
+                ice_dict[ip]["media"] = str(sdpMid)
             ice_dict[ip]["type"] = find_addr_type(text)
             ice_dict[ip]["protocol"] = find_protocol(text)
             remote_ip = find_remote_ip(text)
@@ -155,15 +166,29 @@ def find_media_kind(text):
 
 
 def find_ipv4(text):
-    ipv4_pattern = r'\b((?:\d{1,3}\.){3}\d{1,3})\b\s+(\d+)\b'
+    ipv4_pattern = r'\b((?:\d{1,3}\.){3}\d{1,3})\b'
     ipv4_addresses = re.findall(ipv4_pattern, text)
-    return ipv4_addresses
+    if (len(ipv4_addresses) != 0):
+        addr = ipv4_addresses[0]
+        pattern = addr + r' (\d+)\b'
+        port = re.findall(pattern, text)
+        result = [addr, port[0]]
+    else:
+        result = []  
+    return result
 
 
 def find_ipv6(text):
-    ipv6_pattern = r'\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b|\b(?:[0-9A-Fa-f]{1,4}:){0,6}(?:(?:[0-9A-Fa-f]{1,4}:){1,6})?:[0-9A-Fa-f]{1,4}\b\s+(\d+)\b'
+    ipv6_pattern = r'\b(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}\b|\b(?:[0-9A-Fa-f]{1,4}:){0,6}(?:(?:[0-9A-Fa-f]{1,4}:){1,6})?:[0-9A-Fa-f]{1,4}\b'
     ipv6_addresses = re.findall(ipv6_pattern, text)
-    return ipv6_addresses
+    if (len(ipv6_addresses) != 0):
+        addr = ipv6_addresses[0]
+        pattern = addr + r' (\d+)\b'
+        port = re.findall(pattern, text)
+        result = [addr, port[0]]
+    else:
+        result = []
+    return result
 
 
 if __name__ == "__main__":
