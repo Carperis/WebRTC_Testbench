@@ -5,11 +5,24 @@ import sys
 import os
 import ipaddress
 
+# tshark -r test2.pcapng -T json -Y frame.number==38880
+
+def get_packet_json():
+    os.system("tshark -r test2.pcapng -T json -Y frame.number==38880 > test.json")
 
 def extract_stun_packets(pcapng_file, tshark_dir):
-    cap = pyshark.FileCapture(
-        pcapng_file, tshark_path=tshark_dir, display_filter='stun')
-    return cap
+    # cap = pyshark.FileCapture(pcapng_file, tshark_path=tshark_dir, display_filter='stun')
+    # cap_sum = pyshark.FileCapture(pcapng_file, tshark_path=tshark_dir, only_summaries=True, display_filter='stun',)
+    cap = pyshark.FileCapture(pcapng_file, tshark_path=tshark_dir, display_filter='stun')
+    
+    # These 3 lines are to fix pyshark internal bug of missing first packet
+    first_stun_num = int(cap[0].number) - 1 
+    d_filter = f'stun || frame.number == {str(first_stun_num)}'
+    print(d_filter)
+    
+    cap_sum = pyshark.FileCapture(pcapng_file, tshark_path=tshark_dir, only_summaries=True, display_filter=d_filter,)
+    
+    return cap, cap_sum
 
 
 def get_response_dict(cap):
@@ -25,7 +38,7 @@ def get_response_dict(cap):
             continue
 
         # If the packet has a response_to value, update the dictionary
-        if response_to > 0:
+        if (response_to > 0):
             response_dict[packet_number] = response_to
 
     # Print the packet response relationships
@@ -36,103 +49,149 @@ def get_response_dict(cap):
     return response_dict
 
 
-def get_stun_type(msg_code):
-    part1_dict = {
-        "00": "Request",
-        "01": "Indication",
-        "10": "Success Response",
-        "11": "Error Response"
-    }
-    part2_dict = {
-        "0": "Unknown0",
-        "1": "Binding",
-        "2": "Unknown2",
-        "3": "Allocate",
-        "4": "Refresh",
-        "5": "Unknown5",
-        "6": "Send",
-        "7": "Data",
-        "8": "CreatePermission",
-        "9": "Channel-Bind",
-        "a": "Unknowna",
-        "b": "Unknownb",
-        "c": "Unknownc",
-        "d": "Unknownd",
-        "e": "Unknowne",
-        "f": "Unknownf"
-    }
-    hex_code = msg_code.split("x")[1].lower()
-    part1 = hex_code[1:3]
-    part2 = hex_code[3:4]
-    text = part2_dict[part2] + " " + part1_dict[part1]
-    return text
+def get_packets_dict(cap, cap_sum, identifier):
+    def get_stun_type(msg_code):
+        part1_dict = {
+            "00": "Request",
+            "01": "Indication",
+            "10": "Success Response",
+            "11": "Error Response"
+        }
+        part2_dict = {
+            "0": "Unknown0",
+            "1": "Binding",
+            "2": "Unknown2",
+            "3": "Allocate",
+            "4": "Refresh",
+            "5": "Unknown5",
+            "6": "Send",
+            "7": "Data",
+            "8": "CreatePermission",
+            "9": "Channel-Bind",
+            "a": "Unknowna",
+            "b": "Unknownb",
+            "c": "Unknownc",
+            "d": "Unknownd",
+            "e": "Unknowne",
+            "f": "Unknownf"
+        }
+        hex_code = msg_code.split("x")[1].lower()
+        part1 = hex_code[1:3]
+        part2 = hex_code[3:4]
+        text = part2_dict[part2] + " " + part1_dict[part1]
+        return text
 
+    def unpack_time(time_all):
+        time_parts = time_all.split(" ")
+        date = time_parts[0] + " " + time_parts[2] + time_parts[3]
+        time = time_parts[4]
+        try:
+            zone = time_parts[5] + " " + time_parts[6] + " " + time_parts[7]
+        except:
+            zone = ""
+        # print(time_parts)
+        return [date, time, zone]
 
-def unpack_time(time_all):
-    time_parts = time_all.split(" ")
-    date = time_parts[0] + " " + time_parts[2] + time_parts[3]
-    time = time_parts[4]
-    try:
-        zone = time_parts[5] + " " + time_parts[6] + " " + time_parts[7]
-    except:
-        zone = ""
-    # print(time_parts)
-    return [date, time, zone]
-
-
-def get_packets_dict(cap, identifier):
     packets_dict = {}
-
+    
+    c1 = 0
     for packet in cap:
+        c1 += 1
+        
+    c2 = 0
+    for packet in cap_sum:
+        c2 += 1
+        
+    print(c1, c2)
+
+    i = 0
+    while(True):
+        packet = cap[i]
+        pkt_sum = cap_sum[i]
+        print(packet.number, pkt_sum.no)
         # print(packet)
         sec = float(packet.frame_info.time_epoch)
 
         packets_dict[sec] = {}
+        packets_dict[sec]["client"] = identifier
 
-        packet_number = int(packet.number)
+        #get packet number
+        packet_number = int(packet.number) 
+        packets_dict[sec]["packet_number"] = packet_number
 
-        time_all = packet.frame_info.time
+        #get time
+        time_all = packet.frame_info.time 
         [date, time, zone] = unpack_time(time_all)
+        packets_dict[sec]["time"] = {}
+        packets_dict[sec]["time"]["date"] = date
+        packets_dict[sec]["time"]["time"] = time
+        packets_dict[sec]["time"]["zone"] = zone
+        packets_dict[sec]["time"]["sec"] = sec
 
-        try:
+        #get ip addresses
+        if (hasattr(packet, "ip")):
             src_ip = packet.ip.src
             dst_ip = packet.ip.dst
-        except:
+        elif (hasattr(packet, "ipv6")):
             src_ip = packet.ipv6.src
             dst_ip = packet.ipv6.dst
-        try:
+        
+        # get ports
+        if (hasattr(packet, "udp")):
             src_port = packet.udp.srcport
             dst_port = packet.udp.dstport
-        except:
-            try:
-                src_port = packet.tcp.srcport
-                dst_port = packet.tcp.dstport
-            except:
-                try:
-                    src_port = packet.icmp.udp_srcport
-                    dst_port = packet.icmp.udp_dstport
-                except:
-                    src_port = packet.icmpv6.udp_srcport
-                    dst_port = packet.icmpv6.udp_dstport
-        try:
+            packets_dict[sec]["protocol"] = "UDP"
+        elif (hasattr(packet, "tcp")):
+            src_port = packet.tcp.srcport
+            dst_port = packet.tcp.dstport
+            packets_dict[sec]["protocol"] = "TCP"
+        elif (hasattr(packet, "icmp")):
+            src_port = packet.icmp.udp_srcport
+            dst_port = packet.icmp.udp_dstport
+            packets_dict[sec]["protocol"] = "ICMP"
+        elif (hasattr(packet, "icmpv6")):
+            src_port = packet.icmpv6.udp_srcport
+            dst_port = packet.icmpv6.udp_dstport
+            packets_dict[sec]["protocol"] = "ICMPv6"
+        else:
+            raise Exception("No port found")
+        
+        packets_dict[sec]["src_ip"] = src_ip
+        packets_dict[sec]["src_port"] = src_port
+        packets_dict[sec]["dst_ip"] = dst_ip
+        packets_dict[sec]["dst_port"] = dst_port
+        
+        #get message type
+        if (hasattr(packet.stun, "type")):
             msg_code = packet.stun.type
             msg_type = get_stun_type(msg_code)
-        except:
-            if (packet.stun.channel):
-                msg_code = packet.stun.channel
-                msg_type = "ChannelData TURN Message"
-            else:
-                msg = "Unknown"
-                msg_type = "Unknown"
-                msg_code = "Unknown"
-        try:
+        elif (hasattr(packet.stun, "channel")):
+            msg_code = packet.stun.channel
+            msg_type = "ChannelData TURN Message"
+        else:
+            raise Exception("No message type found")
+        packets_dict[sec]["msg_code"] = msg_code
+        packets_dict[sec]["msg_type"] = msg_type
+        
+        
+        # get "response_to" or "response_in" packet numbers
+        if (hasattr(packet.stun, "response_to")):
             response_to = int(packet.stun.response_to)
-        except:
+        else:
             response_to = ""
-            try:
-                response_in = int(packet.stun.response_in)
-            except:
-                response_in = ""
+        if (hasattr(packet.stun, "response_in")):
+            response_in = int(packet.stun.response_in)
+        else:
+            response_in = ""
+        packets_dict[sec]["response_to"] = response_to
+        packets_dict[sec]["response_in"] = response_in
+        
+        if (hasattr(packet.stun, "attributes")):
+            attr = pkt_sum.info.split(msg_type)[1].strip()
+        else:
+            attr = ""
+        packets_dict[sec]["attributes"] = attr
+            
         # try:
         #     if (packet.stun.att_type == "0x0020"): # XOR-MAPPED-ADDRESS
         #         print(packet)
@@ -140,30 +199,14 @@ def get_packets_dict(cap, identifier):
         #     xor_mapped_address = ""
         # try:
         #     if (packet.stun.att_type == "0x0016"): # XOR-RELAYED-ADDRESS
-
-        packets_dict[sec]["packet_number"] = packet_number
-        packets_dict[sec]["time"] = {}
-        packets_dict[sec]["time"]["date"] = date
-        packets_dict[sec]["time"]["time"] = time
-        packets_dict[sec]["time"]["zone"] = zone
-        packets_dict[sec]["time"]["sec"] = sec
-        packets_dict[sec]["src_ip"] = src_ip
-        packets_dict[sec]["src_port"] = src_port
-        packets_dict[sec]["dst_ip"] = dst_ip
-        packets_dict[sec]["dst_port"] = dst_port
-        packets_dict[sec]["msg_code"] = msg_code
-        packets_dict[sec]["msg_type"] = msg_type
-        packets_dict[sec]["response_to"] = response_to
-        packets_dict[sec]["response_in"] = response_in
-        packets_dict[sec]["identifier"] = identifier
-
-        # msg = msg_code + " " +msg_type
-        # print("Source IP:", src_ip)
-        # print("Source Port:", src_port)
-        # print("Destination IP:", dst_ip)
-        # print("Destination Port:", dst_port)
-        # print("Message Type:", msg)
-        # print()
+        
+        try:
+            packet_next = cap[i+1]
+            pkt_sum_next = cap_sum[i+1]
+            i = i + 1
+        except:
+            break
+        
 
     return packets_dict
 
@@ -204,6 +247,16 @@ def mix_packets_dict(packets_dict1, packets_dict2):
 
 
 def get_ip_dict(packets_dict):
+    def check_ip_address_type(ip_address):
+        try:
+            ip = ipaddress.ip_address(ip_address)
+            if ip.is_private:
+                return "Private"
+            else:
+                return "Public"
+        except ValueError:
+            return "Invalid IP address"
+
     ip_dict = {}  # count the occurrence for each ip
 
     for num in packets_dict.keys():
@@ -231,33 +284,21 @@ def get_ip_dict(packets_dict):
     return ip_dict
 
 
-def check_ip_address_type(ip_address):
-    try:
-        ip = ipaddress.ip_address(ip_address)
-        if ip.is_private:
-            return "Private"
-        else:
-            return "Public"
-    except ValueError:
-        return "Invalid IP address"
-
-
-def rearrange_nodes(addresses):
-    print(addresses)
-    indexes = input(f"arrange 1~5 for {addresses}: \n")
-    indexes = [(int(char) - 1) for char in indexes]
-    nodes = [""] * 5
-    for i in range(len(indexes)):
-        index = indexes[i]
-        if (nodes[index] == ""):
-            nodes[index] = addresses[i]
-        else:
-            nodes[index] = nodes[index] + "/" + addresses[i]
-    print(nodes)
-    return nodes
-
-
 def visualize(all_packets_dict, all_ip_dict):
+    def rearrange_nodes(addresses):
+        print(addresses)
+        indexes = input(f"arrange 1~5 for {addresses}: \n")
+        indexes = [(int(char) - 1) for char in indexes]
+        nodes = [""] * 5
+        for i in range(len(indexes)):
+            index = indexes[i]
+            if (nodes[index] == ""):
+                nodes[index] = addresses[i]
+            else:
+                nodes[index] = nodes[index] + "/" + addresses[i]
+        print(nodes)
+        return nodes
+
     fig, ax = plt.subplots()
     addresses = list(all_ip_dict.keys())
     nodes = rearrange_nodes(addresses)
@@ -350,11 +391,11 @@ if __name__ == "__main__":
     receiver_file = 'packets_receiver.pcapng'
     path = base_dir + divider + "inputs" + divider
 
-    caller_cap = extract_stun_packets(path + caller_file, tshark_dir)
-    receiver_cap = extract_stun_packets(path + receiver_file, tshark_dir)
+    caller_cap, caller_sum = extract_stun_packets(path + caller_file, tshark_dir)
+    receiver_cap, receiver_sum = extract_stun_packets(path + receiver_file, tshark_dir)
 
-    caller_packets_dict = get_packets_dict(caller_cap, "caller")
-    receiver_packets_dict = get_packets_dict(receiver_cap, "receiver")
+    caller_packets_dict = get_packets_dict(caller_cap, caller_sum, "caller")
+    receiver_packets_dict = get_packets_dict(receiver_cap, receiver_sum, "receiver")
     all_packets_dict = mix_packets_dict(
         caller_packets_dict, receiver_packets_dict)
     all_ip_dict = get_ip_dict(all_packets_dict)
