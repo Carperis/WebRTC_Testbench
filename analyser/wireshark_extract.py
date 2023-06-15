@@ -294,7 +294,7 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
 
             if (ip_dict[ip]["Server_flag"] == False):
                 ip_dict[ip]["NAT_flag"] = True
-                if (ip == dst[0]):
+                if (ip == dst[0] and ip_dict[src[0]]["ip_type"] == "Public"):
                     ip_dict[dst[0]]["Client_flag"] = True
             return True
         else:
