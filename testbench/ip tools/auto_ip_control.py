@@ -38,7 +38,7 @@ def is_ipv4(address):
         return False
 
 
-max_time = 10  # seconds
+max_time = 240  # seconds
 most_active_interface = get_local_ip.get_active_interface()
 
 if (os.system('clear') == 1):
