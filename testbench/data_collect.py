@@ -40,7 +40,8 @@ def webrtc_internals_init(browser):  # initialize the webrtc-internals page
 
 def tshark_init(tshark_dir, interface, traffic_dir):
     command = [tshark_dir, '-i', interface, '-w', traffic_dir]
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print("Start tshark process...")
     return process
 
@@ -104,6 +105,9 @@ def get_most_active_interface():
 
 
 if __name__ == "__main__":
+    if (os.system('clear') == 1):
+        os.system('cls')
+
     ans = input("Select your role (1: caller / 2: receiver): ")
     while (ans != '1' and ans != '2'):
         ans = input("Select your role (1: caller / 2: receiver): ")
@@ -113,7 +117,7 @@ if __name__ == "__main__":
     else:
         print("You are the receiver.")
         role = "receiver"
-    
+
     download_btn_xpath1 = "/html/body/p/details/summary"
     download_btn_xpath2 = "/html/body/p/details/div/div[1]/a/button"
     if (identify_os() == 'Windows'):
@@ -149,6 +153,6 @@ if __name__ == "__main__":
     ans = input("Enter q if the call is end: ")
     while (ans != 'q'):
         ans = input("Enter q if the call is end: ")
-        
+
     terminate_call(browser, process, rtc_window, download_btn_xpath1,
                    download_btn_xpath2, download_dir, new_dump_name, old_dump_name)
