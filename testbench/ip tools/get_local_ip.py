@@ -18,6 +18,28 @@ def get_ipv6_address(interface):
     addresses = netifaces.ifaddresses(interface)[netifaces.AF_INET6]
     return addresses[0]['addr'] if addresses else None
 
+def get_ipv4_list():
+    ipv4_addresses = []
+    interfaces = netifaces.interfaces()
+    for interface in interfaces:
+        try:
+            addresses = netifaces.ifaddresses(interface)[netifaces.AF_INET]
+            ipv4_addresses.extend(address['addr'] for address in addresses)
+        except KeyError:
+            pass
+    return ipv4_addresses
+
+def get_ipv6_list():
+    ipv6_addresses = []
+    interfaces = netifaces.interfaces()
+    for interface in interfaces:
+        try:
+            addresses = netifaces.ifaddresses(interface)[netifaces.AF_INET6]
+            ipv6_addresses.extend(address['addr'] for address in addresses)
+        except KeyError:
+            pass
+    return ipv6_addresses
+
 if __name__ == "__main__":
     most_active_interface = get_active_interface()
     ipv4_address = get_ipv4_address(most_active_interface)

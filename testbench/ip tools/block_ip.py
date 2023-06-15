@@ -15,9 +15,9 @@ def block_ip_mac(ip):
     cmd1 = "sudo pfctl -f /etc/pf.conf"
     cmd2 = "sudo pfctl -e"
     os.system(cmd1)
-    print(f">>> \"{cmd1}\" is executed to load PF config\n")
+    # print(f">>> \"{cmd1}\" is executed to load PF config\n")
     os.system(cmd2)
-    print(f">>> \"{cmd2}\" is executed to enable PF config\n")
+    # print(f">>> \"{cmd2}\" is executed to enable PF config\n")
 
 
 def block_ip_win(ip):
@@ -25,7 +25,7 @@ def block_ip_win(ip):
         # Execute netsh command to add a firewall rule
         command = f"netsh advfirewall firewall add rule name=\"BLOCK IP ADDRESS - {ip}\" dir=out action=block remoteip={ip}"
         subprocess.run(command, shell=True, check=True)
-        print(f"Blocked traffic to {ip}")
+        # print(f"Blocked traffic to {ip}")
     except subprocess.CalledProcessError as e:
         print(f"Error blocking traffic to {ip}: {e}")
 
