@@ -56,14 +56,14 @@ ipv4 = ast.literal_eval(input('Enter the remote IPv4 list to block: '))
 for i in range(len(ipv4)-1, -1, -1):
     ip = ipv4[i]
     if (is_ipv4(ip) == False):
-        print(f"\"{ip}\" is not a valid")
+        print(f"\"{ip}\" is not valid")
         ipv4.remove(ip)
 
 ipv6 = ast.literal_eval(input('Enter the remote IPv6 list to block: '))
 for i in range(len(ipv6)-1, -1, -1):
     ip = ipv6[i]
     if (not is_ipv6(ip) or check_ip_address_type(ip) != "Public"):
-        print(f"\"{ip}\" is not a valid")
+        print(f"\"{ip}\" is not valid")
         ipv6.remove(ip)
 
 all_ip = ipv4 + ipv6
