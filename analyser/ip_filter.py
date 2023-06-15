@@ -28,17 +28,6 @@ def generate_display_filter(ip_addresses):
             display_filter += f'ipv6.src == {ip_address} or ipv6.dst == {ip_address}'
     return display_filter
 
-# def generate_display_filter(ip_addresses):
-#     display_filter = ''
-#     for ip_address in ip_addresses:
-#         if display_filter:
-#             display_filter += '||'
-#         if (is_ipv4(ip_address)):
-#             display_filter += f'ip.src=={ip_address}||ip.dst=={ip_address}'
-#         elif (is_ipv6(ip_address)):
-#             display_filter += f'ipv6.src=={ip_address}||ipv6.dst=={ip_address}'
-#     return display_filter
-
 def check_ip_address_type(ip_address):
     try:
         ip = ipaddress.ip_address(ip_address)
