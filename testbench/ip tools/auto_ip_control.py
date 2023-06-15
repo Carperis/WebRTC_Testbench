@@ -48,18 +48,16 @@ ipv4_address = get_local_ip.get_ipv4_address(most_active_interface)
 ipv6_address = get_local_ip.get_ipv6_address(most_active_interface)
 ipv4_list = get_local_ip.get_ipv4_list()
 ipv6_list = get_local_ip.get_ipv6_list()
-print(f"Local IPv4 address: \n{ipv4_list}\n")
-print(f"Local IPv6 address: \n{ipv6_list}\n")
+print(f"[ Local IPv4 Addresses ] | [ Local IPv6 Addresses ]: \n\n{ipv4_list} | {ipv6_list}\n")
 
 
-ipv4 = ast.literal_eval(input('Enter the remote IPv4 list to block: '))
+ip_string = ast.literal_eval(input('Enter [ Remote IPv4 Addresses ] | [ Remote IPv6 Addresses ] to block: '))
+ipv4, ipv6 = ip_string.split('|')
 for i in range(len(ipv4)-1, -1, -1):
     ip = ipv4[i]
     if (is_ipv4(ip) == False):
         print(f"\"{ip}\" is not valid")
         ipv4.remove(ip)
-
-ipv6 = ast.literal_eval(input('Enter the remote IPv6 list to block: '))
 for i in range(len(ipv6)-1, -1, -1):
     ip = ipv6[i]
     if (not is_ipv6(ip) or check_ip_address_type(ip) != "Public"):
