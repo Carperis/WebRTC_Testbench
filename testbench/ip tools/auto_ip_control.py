@@ -51,8 +51,10 @@ ipv6_list = get_local_ip.get_ipv6_list()
 print(f"[ Local IPv4 Addresses ] | [ Local IPv6 Addresses ]: \n\n{ipv4_list} | {ipv6_list}\n")
 
 
-ip_string = ast.literal_eval(input('Enter [ Remote IPv4 Addresses ] | [ Remote IPv6 Addresses ] to block: '))
+ip_string = input('Enter [ Remote IPv4 Addresses ] | [ Remote IPv6 Addresses ] to block: ')
 ipv4, ipv6 = ip_string.split('|')
+ipv4 = ast.literal_eval(ipv4)
+ipv6 = ast.literal_eval(ipv6)
 for i in range(len(ipv4)-1, -1, -1):
     ip = ipv4[i]
     if (is_ipv4(ip) == False):
