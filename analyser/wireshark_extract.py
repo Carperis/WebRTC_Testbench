@@ -4,6 +4,7 @@ import json
 import shutil
 import re
 import ipaddress
+import copy
 
 
 def identify_os():
@@ -148,7 +149,7 @@ def get_packet_json(file_name, out_name, d_filter):
     output_file = base_dir + divider + "outputs" + divider + out_name
     os.system(
         f"{tshark_dir} -r {file_name} -T json -Y \"{d_filter}\" --no-duplicate-keys > {output_file}")
-    with open(output_file, 'r') as file:
+    with open(output_file, 'rb') as file:
         file_content = file.read()
         data = json.loads(file_content)
     # shutil.rmtree(output_file, ignore_errors=True)
@@ -156,42 +157,78 @@ def get_packet_json(file_name, out_name, d_filter):
     return data
 
 
-def classify_packets(pkts_json):
-    result = {}
-    method_codes = list(stun_method.keys())
-    for key in method_codes:
-        result[stun_method[key].split(" ")[0]] = []
-
-    result["ChannelMessage"] = []
-    result["Unknown"] = []
-
-    for pkt in pkts_json:
+def classify_packets(result, pkts_json):
+    def process_stun_pkt(result, pkt):
+        last_layer = 'stun'
+        stun_dict = result[last_layer]
+        method_codes = list(stun_method.keys())
         stun_sections = pkt['_source']['layers']['stun']
         if (type(stun_sections) is not list):
             stun_sections = [stun_sections]
         else:
-            print(f"Multiple stun sections! Packet number: {pkt['_source']['layers']['frame']['frame.number']}")
+            print(
+                f"Multiple stun sections! Packet number: {pkt['_source']['layers']['frame']['frame.number']}")
         for stun_section in stun_sections:
             if ('stun.type_tree' in stun_section):
-                code = int(stun_section['stun.type_tree']['stun.type.method'], 16)
+                code = int(stun_section['stun.type_tree']
+                           ['stun.type.method'], 16)
                 if (code in method_codes):
-                    result[stun_method[code].split(" ")[0]].append(pkt)
+                    code_name = stun_method[code].split(" ")[0]
+                    if (code_name not in stun_dict):
+                        stun_dict[code_name] = {}
+                        stun_dict[code_name]['packets'] = []
+                    stun_dict[code_name]['packets'].append(pkt)
+                    count_stun_attr(stun_dict[code_name], stun_section)
                 else:
-                    result["Unknown"].append(pkt)
+                    if ("Unknown" not in stun_dict):
+                        stun_dict["Unknown"] = {}
+                        stun_dict["Unknown"]['packets'] = []
+                    stun_dict["Unknown"]['packets'].append(pkt)
             elif ('stun.channel' in stun_section):
                 code = int(stun_section['stun.channel'], 16)
-                result["ChannelMessage"].append(pkt)
+                if ("ChannelMessage" not in stun_dict):
+                    stun_dict["ChannelMessage"] = {}
+                    stun_dict["ChannelMessage"]['packets'] = []
+                stun_dict["ChannelMessage"]['packets'].append(pkt)
             else:
                 raise Exception("Unknown packet type")
+        # return copy.deepcopy(result)
 
-    # count number of packets in each category
+    
+    def count_stun_attr(method_dict, stun_section):
+        if ("stun.attributes" in stun_section):
+            attr = stun_section['stun.attributes']
+            if (type(attr["stun.attribute"]) == list):
+                attr_list = [int(code, 16) for code in attr["stun.attribute"]]
+            else:
+                attr_list = [int(attr["stun.attribute"], 16)]
+            attr_name_list = [stun_attribute[code].split(" ")[0] for code in attr_list]
+            for attr_name in attr_name_list:
+                if (attr_name not in method_dict):
+                    method_dict[attr_name] = 0
+                method_dict[attr_name] += 1
+        # return copy.deepcopy(method_dict)
+            
+    for pkt in pkts_json:
+        layers = list(pkt['_source']['layers'].keys())
+        last_layer = layers[-1]
+        if ('stun' in layers):
+            if ('stun' not in result):
+                result['stun'] = {}
+            process_stun_pkt(result, pkt)
+        else:
+            if (last_layer not in result):
+                result[last_layer] = []
+            result[last_layer].append(pkt)
+
+    # count number of packets in each stun category
     # total = 0
-    # for key in result:
-    #     print(key, len(result[key]))
-    #     total += len(result[key])
+    # for key in result['stun']:
+    #     print(key, len(result['stun'][key]))
+    #     total += len(result['stun'][key])
     # print("Total:", total)
 
-    return result
+    return copy.deepcopy(result)
 
 
 def get_ip_relations(ip_dict, pkts_classified, client_name):
@@ -352,8 +389,8 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
             return False
 
     # ip_dict = {}
-    allocate_pkts = pkts_classified['Allocate']
-    binding_pkts = pkts_classified['Binding']
+    allocate_pkts = pkts_classified['stun']['Allocate']['packets']
+    binding_pkts = pkts_classified['stun']['Binding']['packets']
 
     for pkt in allocate_pkts:
         src, dst = get_src_and_dst(pkt)
@@ -380,7 +417,7 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
         if (int(pkt_class, 16) == 0x00 and ip_dict[src[0]]["Client_flag"] == True and ip_dict[dst[0]]["Server_flag"] == True):
             ip_dict[src[0]]["Client_name"] = client_name
 
-    return ip_dict
+    # return copy.deepcopy(ip_dict)
 
 
 def get_ip_filter(ip_dict, client_name):
@@ -418,20 +455,34 @@ if __name__ == "__main__":
 
     name = caller_file.split(divider)[-1].split('.')[0] + '.json'
     caller_json = get_packet_json(caller_file, name, stun_filter)
-    caller_classified = classify_packets(caller_json)
-    ip_dict = get_ip_relations(ip_dict, caller_classified, client_names[0])
-    caller_ip_filter_code = get_ip_filter(ip_dict, client_names[0])
-    name = caller_file.split(divider)[-1].split('.')[0] + '_all.json'
-    caller_all_json = get_packet_json(caller_file, name, caller_ip_filter_code)
-
     name = receiver_file.split(divider)[-1].split('.')[0] + '.json'
     receiver_json = get_packet_json(receiver_file, name, stun_filter)
-    receiver_classified = classify_packets(receiver_json)
-    ip_dict = get_ip_relations(ip_dict, receiver_classified, client_names[1])
+
+    temp_dict = {}
+    caller_stun_classified = classify_packets(temp_dict, caller_json)
+    get_ip_relations(ip_dict, temp_dict, client_names[0])
+    temp_dict = {}
+    receiver_stun_classified = classify_packets(temp_dict, receiver_json)
+    get_ip_relations(ip_dict, temp_dict, client_names[1])
+    stun_classified_dict = classify_packets(temp_dict, caller_json)
+
+    caller_ip_filter_code = get_ip_filter(ip_dict, client_names[0])
     receiver_ip_filter_code = get_ip_filter(ip_dict, client_names[1])
+
+    temp_dict = {}
+    name = caller_file.split(divider)[-1].split('.')[0] + '_all.json'
+    caller_all_json = get_packet_json(caller_file, name, caller_ip_filter_code)
     name = receiver_file.split(divider)[-1].split('.')[0] + '_all.json'
-    receiver_all_json = get_packet_json(receiver_file, name, receiver_ip_filter_code)
+    receiver_all_json = get_packet_json(
+        receiver_file, name, receiver_ip_filter_code)
 
-    all_json = caller_all_json.extend(receiver_all_json)
+    all_json = caller_all_json + receiver_all_json
+    temp_dict = {}
+    caller_all_classified = classify_packets(temp_dict, caller_all_json)
+    temp_dict = {}
+    receiver_all_classified = classify_packets(temp_dict, receiver_all_json)
+    all_classified_dict = classify_packets(temp_dict, caller_all_json)
 
-    print(len(caller_json), len(receiver_json))
+    print(f"STUN Count: {len(caller_json)}, {len(receiver_json)}")
+    print(f"All Count: {len(caller_all_json)}, {len(receiver_all_json)}")
+    print()
