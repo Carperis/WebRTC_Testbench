@@ -2,6 +2,8 @@ import json
 import os
 import sys
 import re
+import wireshark_extract
+
 
 base_dir = os.path.dirname(os.path.abspath(
     __file__))  # get the current directory
@@ -38,19 +40,19 @@ def extract_candidateID(json_data):
     for key in keys_with_ip:
         id = key.split("-")[0]
         candidateID_dict[id] = {"address": "",
-                                "port": "", "location": "", "type": ""}
+                                "port": "", "client": "", "type": ""}
 
     for key in stats.keys():
         if ("-address" in key or "-relatedAddress" in key):
             id = key.split("-")[0]
             list_str = stats[key]['values']
             candidateID_dict[id]["address"] = json.loads(list_str)[0]
-            candidateID_dict[id]["location"] = stats[key]['statsType'].split(
+            candidateID_dict[id]["client"] = stats[key]['statsType'].split(
                 "-")[0]
         elif ("-port" in key or "-relatedPort" in key):
             id = key.split("-")[0]
             list_str = stats[key]['values']
-            candidateID_dict[id]["port"] = json.loads(list_str)[0]
+            candidateID_dict[id]["port"] = str(json.loads(list_str)[0])
             if ("-relatedPort" in key):
                 candidateID_dict[id]["port"] = str(
                     json.loads(list_str)[0]) + " (related)"
@@ -76,7 +78,7 @@ def extract_icecandidate(json_data):
         elif (info_dict["type"] == "icecandidate"):
             sdpMid = find_media_num(text)
             subtext = text.split("typ")[0]
-            
+
             # ipv4_addr = find_ipv4(subtext)
             # ipv6_addr = find_ipv6(subtext)
             # if (len(ipv4_addr) >= 1):
@@ -84,12 +86,12 @@ def extract_icecandidate(json_data):
             # elif (len(ipv6_addr) >= 1):
             #     ip = ipv6_addr
             # ip = ip[0] + "_" + ip[1]
-            
+
             subsubtext = subtext.split(" ")
             addr = subsubtext[len(subsubtext)-3]
             port = subsubtext[len(subsubtext)-2]
             ip = addr + "_" + port
-            
+
             ice_dict[ip] = {}
             try:
                 ice_dict[ip]["media"] = str(sdpMid) + "_" + sdpMid_list[sdpMid]
@@ -102,7 +104,6 @@ def extract_icecandidate(json_data):
                 ice_dict[ip]["remote"] = remote_ip
             else:
                 ice_dict[ip]["remote"] = ""
-            
 
     return ice_dict
     # pass
@@ -174,7 +175,7 @@ def find_ipv4(text):
         port = re.findall(pattern, text)
         result = [addr, port[0]]
     else:
-        result = []  
+        result = []
     return result
 
 
@@ -191,6 +192,26 @@ def find_ipv6(text):
     return result
 
 
+def network_to_physical_addr(network_ip, file_name, trans_dict):
+    d_filter1 = "ip.src_host == \"" + network_ip + "\""
+    d_filter2 = "ip.dst_host == \"" + network_ip + "\""
+    d_filter = d_filter1 + " or " + d_filter2
+    add_arg = "-Nnd -e ip.src -e ip.src_host -e ip.dst -e ip.dst_host"
+    out_name = 'temp.json'
+    json_file = wireshark_extract.get_packet_json(
+        file_name, out_name, d_filter, add_arg)
+    try:
+        first_packet = json_file[0]
+        if ('local' in first_packet['_source']['layers']['ip.src_host'][0]):
+            physical_ip = first_packet['_source']['layers']['ip.src'][0]
+        elif ('local' in first_packet['_source']['layers']['ip.dst_host'][0]):
+            physical_ip = first_packet['_source']['layers']['ip.dst'][0]
+        trans_dict[network_ip] = physical_ip
+    except:
+        physical_ip = ""
+    return physical_ip
+
+
 if __name__ == "__main__":
     if (identify_os() == 'Windows'):
         divider = "\\"
@@ -199,47 +220,79 @@ if __name__ == "__main__":
 
     # file_name_caller = "webrtc_dump_caller.txt"
     # file_name_receiver = "webrtc_dump_receiver.txt"
+    path = base_dir + divider + "inputs" + divider
+    caller_file = path + 'packets_caller.pcapng'
+    receiver_file = path + 'packets_receiver.pcapng'
+    pkt_file_names = [caller_file, receiver_file]
     file_name_caller = "dump_caller.txt"
     file_name_receiver = "dump_receiver.txt"
     file_names = [file_name_caller, file_name_receiver]
-    location_names = ["caller", "receiver"]
+    client_names = ["caller", "receiver"]
+    trans_dict = {}
 
     ip_dict = {}
-    for i in range(2):
-        location_name1 = location_names[i]
-        location_name2 = location_names[1-i]
+    for i in range(len(file_names)):
+        client_name1 = client_names[i]
+        client_name2 = client_names[1-i]
         file_name = file_names[i]
-        dump_json = unpack_dump(base_dir + divider +
-                                "inputs" + divider + file_name)
+        dump_json = unpack_dump(path + file_name)
 
         candidateID_dict = extract_candidateID(dump_json)
         for key in candidateID_dict.keys():
             if (len(candidateID_dict[key]["address"]) != 0):
-                new_key = candidateID_dict[key]["address"] + \
-                    "_" + str(candidateID_dict[key]["port"])
-                ip_dict[new_key] = {}
-                ip_dict[new_key]["type"] = candidateID_dict[key]["type"]
-                if (candidateID_dict[key]["location"] == "local"):
-                    ip_dict[new_key]["location"] = location_name1
+                addr = candidateID_dict[key]["address"]
+                if ('local' in addr):
+                    if (addr not in trans_dict):
+                        for file_n in pkt_file_names:
+                            if (network_to_physical_addr(addr, file_n, trans_dict) != ""):
+                                break
+                    try:
+                        addr = trans_dict[addr]
+                    except:
+                        trans_dict[addr] = addr
+                port = candidateID_dict[key]["port"]
+                if (addr not in ip_dict):
+                    ip_dict[addr] = {}
+                if (port not in ip_dict[addr]):
+                    ip_dict[addr][port] = {}
+                ip_dict[addr][port]["type"] = candidateID_dict[key]["type"]
+                if (candidateID_dict[key]["client"] == "local"):
+                    ip_dict[addr][port]["client"] = client_name1
                 else:
-                    ip_dict[new_key]["location"] = location_name2
+                    ip_dict[addr][port]["client"] = client_name2
 
         ice_dict = extract_icecandidate(dump_json)
         for key in ice_dict.keys():
-            if (key not in ip_dict.keys()):
-                ip_dict[key] = {}
-            ip_dict[key]["type"] = ice_dict[key]["type"]
-            ip_dict[key]["media"] = ice_dict[key]["media"]
-            ip_dict[key]["protocol"] = ice_dict[key]["protocol"]
-            ip_dict[key]["remote"] = ice_dict[key]["remote"]
-        # print(ice_dict)
+            addr = key.split("_")[0]
+            if ('local' in addr):
+                if (addr not in trans_dict):
+                    for file_n in pkt_file_names:
+                        if (network_to_physical_addr(addr, file_n, trans_dict) != ""):
+                            break
+                try:
+                    addr = trans_dict[addr]
+                except:
+                    trans_dict[addr] = addr
+            port = key.split("_")[1]
+            if (addr not in ip_dict):
+                ip_dict[addr] = {}
+            if (port not in ip_dict[addr]):
+                ip_dict[addr][port] = {}
+            ip_dict[addr][port]["type"] = ice_dict[key]["type"]
+            ip_dict[addr][port]["media"] = ice_dict[key]["media"]
+            ip_dict[addr][port]["protocol"] = ice_dict[key]["protocol"]
+            ip_dict[addr][port]["remote"] = ice_dict[key]["remote"]
 
-    # print(ip_dict)
-
+    output_file_name = "ip_info"
     import pandas as pd
 
     # Convert dictionary to pandas DataFrame
     df = pd.DataFrame.from_dict(ip_dict, orient='index')
 
     # Save DataFrame to Excel
-    df.to_excel(base_dir +  divider + "outputs" + divider + 'ip info.xlsx', index_label='Keys')
+    df.to_excel(base_dir + divider + "outputs" + divider +
+                output_file_name + '.xlsx', index_label='Keys')
+
+    import json
+    with open(base_dir + divider + "outputs" + divider + output_file_name + '.json', "w") as file:
+        json.dump(ip_dict, file, indent=4)

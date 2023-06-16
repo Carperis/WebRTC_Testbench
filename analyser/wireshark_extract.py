@@ -145,14 +145,15 @@ stun_attribute = {
 # convert packets in pcapng to json
 
 
-def get_packet_json(file_name, out_name, d_filter):
+def get_packet_json(file_name, out_name, d_filter, add_arg="", delete=False):
     output_file = base_dir + divider + "outputs" + divider + out_name
     os.system(
-        f"{tshark_dir} -r {file_name} -T json -Y \"{d_filter}\" --no-duplicate-keys > {output_file}")
+        f"{tshark_dir} -r {file_name} {add_arg} -T json -Y \"{d_filter}\" --no-duplicate-keys > {output_file}")
     with open(output_file, 'rb') as file:
         file_content = file.read()
         data = json.loads(file_content)
-    # shutil.rmtree(output_file, ignore_errors=True)
+    if (delete):
+        shutil.rmtree(output_file, ignore_errors=True)
     # print(data)
     return data
 
@@ -194,7 +195,6 @@ def classify_packets(result, pkts_json):
                 raise Exception("Unknown packet type")
         # return copy.deepcopy(result)
 
-    
     def count_stun_attr(method_dict, stun_section):
         if ("stun.attributes" in stun_section):
             attr = stun_section['stun.attributes']
@@ -202,13 +202,14 @@ def classify_packets(result, pkts_json):
                 attr_list = [int(code, 16) for code in attr["stun.attribute"]]
             else:
                 attr_list = [int(attr["stun.attribute"], 16)]
-            attr_name_list = [stun_attribute[code].split(" ")[0] for code in attr_list]
+            attr_name_list = [stun_attribute[code].split(
+                " ")[0] for code in attr_list]
             for attr_name in attr_name_list:
                 if (attr_name not in method_dict):
                     method_dict[attr_name] = 0
                 method_dict[attr_name] += 1
         # return copy.deepcopy(method_dict)
-            
+
     for pkt in pkts_json:
         layers = list(pkt['_source']['layers'].keys())
         last_layer = layers[-1]
@@ -357,6 +358,11 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
 
             if (ip_dict[ip]["Server_flag"] == False):
                 ip_dict[ip]["NAT_flag"] = True
+
+                name_list = ip_dict[ip]["Client_name"].split(" ")
+                if (client_name not in name_list):
+                    ip_dict[ip]["Client_name"] += client_name + " "
+
                 if (ip == dst[0]):
                     ip_dict[dst[0]]["Client_flag"] = True
             return True
@@ -414,7 +420,10 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
     for pkt in binding_pkts:
         pkt_class = pkt['_source']['layers']['stun']['stun.type_tree']['stun.type.class']
         src, dst = get_src_and_dst(pkt)
-        if (int(pkt_class, 16) == 0x00 and ip_dict[src[0]]["Client_flag"] == True and ip_dict[dst[0]]["Server_flag"] == True):
+        # check1 has three conditions: 1. pkt is Binding Request 2. src is client 3. dst is server
+        check1 = int(
+            pkt_class, 16) == 0x00 and ip_dict[src[0]]["Client_flag"] == True and ip_dict[dst[0]]["Server_flag"] == True
+        if (check1):
             ip_dict[src[0]]["Client_name"] = client_name
 
     # return copy.deepcopy(ip_dict)
