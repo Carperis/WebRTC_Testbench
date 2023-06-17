@@ -3,7 +3,7 @@ import os
 import sys
 import re
 import wireshark_extract
-
+import pandas as pd
 
 base_dir = os.path.dirname(os.path.abspath(
     __file__))  # get the current directory
@@ -193,22 +193,19 @@ def find_ipv6(text):
 
 
 def network_to_physical_addr(network_ip, file_name, trans_dict):
-    d_filter1 = "ip.src_host == \"" + network_ip + "\""
-    d_filter2 = "ip.dst_host == \"" + network_ip + "\""
-    d_filter = d_filter1 + " or " + d_filter2
-    add_arg = "-Nnd -e ip.src -e ip.src_host -e ip.dst -e ip.dst_host"
+    d_filter = "ip.src_host == \"" + network_ip + "\""
+    add_arg = "-Nnd -e ip.src -e ip.src_host"
     out_name = 'temp.json'
     json_file = wireshark_extract.get_packet_json(
-        file_name, out_name, d_filter, add_arg)
+        file_name, out_name, d_filter, add_arg, temp=True)
     try:
         first_packet = json_file[0]
-        if ('local' in first_packet['_source']['layers']['ip.src_host'][0]):
-            physical_ip = first_packet['_source']['layers']['ip.src'][0]
-        elif ('local' in first_packet['_source']['layers']['ip.dst_host'][0]):
-            physical_ip = first_packet['_source']['layers']['ip.dst'][0]
+        first_packet['_source']['layers']['ip.src_host'][0]
+        physical_ip = first_packet['_source']['layers']['ip.src'][0]
         trans_dict[network_ip] = physical_ip
     except:
         physical_ip = ""
+        trans_dict[network_ip] = network_ip
     return physical_ip
 
 
@@ -246,10 +243,7 @@ if __name__ == "__main__":
                         for file_n in pkt_file_names:
                             if (network_to_physical_addr(addr, file_n, trans_dict) != ""):
                                 break
-                    try:
-                        addr = trans_dict[addr]
-                    except:
-                        trans_dict[addr] = addr
+                    addr = trans_dict[addr]
                 port = candidateID_dict[key]["port"]
                 if (addr not in ip_dict):
                     ip_dict[addr] = {}
@@ -269,10 +263,7 @@ if __name__ == "__main__":
                     for file_n in pkt_file_names:
                         if (network_to_physical_addr(addr, file_n, trans_dict) != ""):
                             break
-                try:
-                    addr = trans_dict[addr]
-                except:
-                    trans_dict[addr] = addr
+                addr = trans_dict[addr]
             port = key.split("_")[1]
             if (addr not in ip_dict):
                 ip_dict[addr] = {}
@@ -284,14 +275,10 @@ if __name__ == "__main__":
             ip_dict[addr][port]["remote"] = ice_dict[key]["remote"]
 
     output_file_name = "ip_info"
-    import pandas as pd
 
-    # Convert dictionary to pandas DataFrame
-    df = pd.DataFrame.from_dict(ip_dict, orient='index')
-
-    # Save DataFrame to Excel
-    df.to_excel(base_dir + divider + "outputs" + divider +
-                output_file_name + '.xlsx', index_label='Keys')
+    # df = pd.DataFrame.from_dict(ip_dict, orient='index')
+    # df.to_excel(base_dir + divider + "outputs" + divider +
+    #             output_file_name + '.xlsx', index_label='Keys')
 
     import json
     with open(base_dir + divider + "outputs" + divider + output_file_name + '.json', "w") as file:

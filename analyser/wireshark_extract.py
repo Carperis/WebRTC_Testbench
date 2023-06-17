@@ -5,6 +5,10 @@ import shutil
 import re
 import ipaddress
 import copy
+import urllib.request
+import urllib.error
+from bs4 import BeautifulSoup
+import geoip2.database
 
 
 def identify_os():
@@ -145,8 +149,11 @@ stun_attribute = {
 # convert packets in pcapng to json
 
 
-def get_packet_json(file_name, out_name, d_filter, add_arg="", delete=False):
-    output_file = base_dir + divider + "outputs" + divider + out_name
+def get_packet_json(file_name, out_name, d_filter, add_arg="", delete=False, temp=False):
+    if (temp):
+        output_file = base_dir + divider + "temp" + divider + out_name
+    else:
+        output_file = base_dir + divider + "outputs" + divider + out_name
     os.system(
         f"{tshark_dir} -r {file_name} {add_arg} -T json -Y \"{d_filter}\" --no-duplicate-keys > {output_file}")
     with open(output_file, 'rb') as file:
@@ -158,7 +165,7 @@ def get_packet_json(file_name, out_name, d_filter, add_arg="", delete=False):
     return data
 
 
-def classify_packets(result, pkts_json):
+def classify_packets(result, pkts_json, copy_result=False):
     def process_stun_pkt(result, pkt):
         last_layer = 'stun'
         stun_dict = result[last_layer]
@@ -228,8 +235,10 @@ def classify_packets(result, pkts_json):
     #     print(key, len(result['stun'][key]))
     #     total += len(result['stun'][key])
     # print("Total:", total)
-
-    return copy.deepcopy(result)
+    if (copy_result):
+        return copy.deepcopy(result)
+    else:
+        return result
 
 
 def get_ip_relations(ip_dict, pkts_classified, client_name):
@@ -269,30 +278,19 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
         port = ip_port[1]
         if (ip not in ip_dict):
             ip_dict[ip] = {
-                "ports": [],
-                "map": [],
-                "relay": [],
-                "mapped": [],
-                "relayed": [],
-                "ip_type": "",
-                "Client_name": "",
-                "Client_flag": False,
-                "NAT_flag": False,
-                "Server_flag": False,
+                "ip_version": "",  # IPv4 or IPv6
+                "ip_host": "",  # xxx.local, xxx.com...
+                "ip_type": "",  # Private, Public, or Invalid
+                "client_name": "",  # caller, receiver...
+                "source_name": "",  # Facebook, Discord...
+                "source_type": "",  # client, nat, or server
+                "ports": {}
             }
-        if (port not in ip_dict[ip]["ports"]):
-            ip_dict[ip]["ports"].append(port)
+        ip_dict[ip]["ports"][port] = ""
+        ip_dict[ip]["ip_version"] = get_ip_version(ip)
+        ip_dict[ip]["ip_type"] = check_ip_address_type(ip)
 
-        type = check_ip_address_type(ip)
-        if (type == "Private"):
-            ip_dict[ip]["ip_type"] = "Private"
-            ip_dict[ip]["Client_flag"] = True
-        elif (type == "Public"):
-            ip_dict[ip]["ip_type"] = "Public"
-        else:
-            ip_dict[ip]["ip_type"] = "Invalid IP address"
-
-    def get_attributes(pkt):
+    def get_stun_attributes(pkt):
         attr = pkt['_source']['layers']['stun']['stun.attributes']
         if (type(attr["stun.attribute"]) == list):
             attr_list = [int(code, 16) for code in attr["stun.attribute"]]
@@ -302,6 +300,18 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
             detail_list = [attr["stun.attribute_tree"]]
         return attr_list, detail_list
 
+    def get_ip_version(address):
+        try:
+            ip = ipaddress.ip_address(address)
+            if isinstance(ip, ipaddress.IPv4Address):
+                return "IPv4"
+            elif isinstance(ip, ipaddress.IPv6Address):
+                return "IPv6"
+            else:
+                return "Unknown"
+        except ValueError:
+            return "Invalid"
+
     def check_ip_address_type(ip_address):
         try:
             ip = ipaddress.ip_address(ip_address)
@@ -310,10 +320,10 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
             else:
                 return "Public"
         except ValueError:
-            return "Invalid IP address"
+            return "Invalid"
 
     def check_xor_mapped_address(ip_dict, dst, src, attr_list, detail_list):
-        if (0x0020 in attr_list):  # XOR-MAPPED-ADDRESS
+        if (0x0020 in attr_list or 0x0001 in attr_list):  # XOR-MAPPED-ADDRESS or MAPPED-ADDRESS
             i = attr_list.index(0x0020)
             detail = detail_list[i]
             try:
@@ -322,49 +332,13 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
                 ip = detail["stun.att.ipv6"]
             port = detail["stun.att.port"]
             mapped = [ip, port]
-            map_dict = {"from": dst, "to": mapped}
-            mapped_dict = {"from": dst, "to": mapped, "by": src}
+            map_dict = {"from": dst, "to": mapped, "by": src}
             add_to_ip_dict(ip_dict, mapped)
-            if (mapped_dict not in ip_dict[dst[0]]["mapped"]):
-                ip_dict[dst[0]]["mapped"].append(mapped_dict)
-            if (map_dict not in ip_dict[src[0]]["map"]):
-                ip_dict[src[0]]["map"].append(map_dict)
-
-            if (ip_dict[ip]["Server_flag"] == False):
-                ip_dict[ip]["NAT_flag"] = True
-                if (ip == dst[0] and ip_dict[src[0]]["ip_type"] == "Public"):
-                    ip_dict[dst[0]]["Client_flag"] = True
-            return True
-        else:
-            return False
-
-    def check_mapped_address(ip_dict, dst, src, attr_list, detail_list):
-        if (0x0001 in attr_list):  # MAPPED-ADDRESS
-            i = attr_list.index(0x0020)
-            detail = detail_list[i]
-            try:
-                ip = detail["stun.att.ipv4"]
-            except:
-                ip = detail["stun.att.ipv6"]
-            port = detail["stun.att.port"]
-            mapped = [ip, port]
-            map_dict = {"from": dst, "to": mapped}
-            mapped_dict = {"from": dst, "to": mapped, "by": src}
-            add_to_ip_dict(ip_dict, mapped)
-            if (mapped_dict not in ip_dict[dst[0]]["mapped"]):
-                ip_dict[dst[0]]["mapped"].append(mapped_dict)
-            if (map_dict not in ip_dict[src[0]]["map"]):
-                ip_dict[src[0]]["map"].append(map_dict)
-
-            if (ip_dict[ip]["Server_flag"] == False):
-                ip_dict[ip]["NAT_flag"] = True
-
-                name_list = ip_dict[ip]["Client_name"].split(" ")
-                if (client_name not in name_list):
-                    ip_dict[ip]["Client_name"] += client_name + " "
-
-                if (ip == dst[0]):
-                    ip_dict[dst[0]]["Client_flag"] = True
+            for ip in [dst, mapped, src]:
+                if ("XOR-MAPPED-ADDRESS" not in ip_dict[ip[0]]):
+                    ip_dict[ip[0]]["XOR-MAPPED-ADDRESS"] = []
+                if (map_dict not in ip_dict[ip[0]]["XOR-MAPPED-ADDRESS"]):
+                    ip_dict[ip[0]]["XOR-MAPPED-ADDRESS"].append(map_dict)
             return True
         else:
             return False
@@ -379,52 +353,138 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
                 ip = detail["stun.att.ipv6"]
             port = detail["stun.att.port"]
             relayed = [ip, port]
-            relay_dict = {"from": dst, "to": relayed}
-            relayed_dict = {"from": dst, "to": relayed, "by": src}
+            relay_dict = {"from": dst, "to": relayed, "by": src}
             add_to_ip_dict(ip_dict, relayed)
-            if (relayed_dict not in ip_dict[dst[0]]["relayed"]):
-                ip_dict[dst[0]]["relayed"].append(relayed_dict)
-            if (relay_dict not in ip_dict[src[0]]["relay"]):
-                ip_dict[src[0]]["relay"].append(relay_dict)
-
-            ip_dict[src[0]]["Server_flag"] = True
-            ip_dict[src[0]]["NAT_flag"] = False
-            ip_dict[src[0]]["Client_flag"] = False
+            for ip in [dst, relayed, src]:
+                if ("XOR-RELAYED-ADDRESS" not in ip_dict[ip[0]]):
+                    ip_dict[ip[0]]["XOR-RELAYED-ADDRESS"] = []
+                if (relay_dict not in ip_dict[ip[0]]["XOR-RELAYED-ADDRESS"]):
+                    ip_dict[ip[0]]["XOR-RELAYED-ADDRESS"].append(relay_dict)
             return True
         else:
             return False
 
-    # ip_dict = {}
-    allocate_pkts = pkts_classified['stun']['Allocate']['packets']
-    binding_pkts = pkts_classified['stun']['Binding']['packets']
+    def check_xor_peer_address(ip_dict, src, dst, attr_list, detail_list):
+        if (0x0012 in attr_list):  # XOR-PEER-ADDRESS
+            i = attr_list.index(0x0012)
+            detail = detail_list[i]
+            try:
+                ip = detail["stun.att.ipv4"]
+            except:
+                ip = detail["stun.att.ipv6"]
+            port = detail["stun.att.port"]
+            peer = [ip, port]
+            peer_dict = {"A": dst, "peer": peer, "B": src}
+            add_to_ip_dict(ip_dict, peer)
+            for ip in [dst, peer, src]:
+                if ("XOR-PEER-ADDRESS" not in ip_dict[ip[0]]):
+                    ip_dict[ip[0]]["XOR-PEER-ADDRESS"] = []
+                if (peer_dict not in ip_dict[ip[0]]["XOR-PEER-ADDRESS"]):
+                    ip_dict[ip[0]]["XOR-PEER-ADDRESS"].append(peer_dict)
+            return True
+        else:
+            return False
 
-    for pkt in allocate_pkts:
-        src, dst = get_src_and_dst(pkt)
-        add_to_ip_dict(ip_dict, src)
-        add_to_ip_dict(ip_dict, dst)
-        if ("stun.attributes" in pkt['_source']['layers']['stun']):
-            attr_list, detail_list = get_attributes(pkt)
-            check_xor_mapped_address(ip_dict, dst, src, attr_list, detail_list)
-            check_xor_relayed_address(
-                ip_dict, src, dst, attr_list, detail_list)
+    # def get_ip_company(ip):
+    #     import requests
+    #     from bs4 import BeautifulSoup
+    #     url = "https://ipinfo.io/" + ip
 
-    for pkt in binding_pkts:
-        src, dst = get_src_and_dst(pkt)
-        add_to_ip_dict(ip_dict, src)
-        add_to_ip_dict(ip_dict, dst)
-        if ("stun.attributes" in pkt['_source']['layers']['stun']):
-            attr_list, detail_list = get_attributes(pkt)
-            check_xor_mapped_address(ip_dict, dst, src, attr_list, detail_list)
-            check_mapped_address(ip_dict, dst, src, attr_list, detail_list)
+    #     head = {
+    #         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+    #     }
+    #     request = urllib.request.Request(url, headers=head)
+    #     html = ""
+    #     try:
+    #         response = urllib.request.urlopen(request, timeout=5)
+    #         html = response.read().decode("utf-8")
+    #     except Exception as e:
+    #         print(e)
 
-    for pkt in binding_pkts:
-        pkt_class = pkt['_source']['layers']['stun']['stun.type_tree']['stun.type.class']
-        src, dst = get_src_and_dst(pkt)
-        # check1 has three conditions: 1. pkt is Binding Request 2. src is client 3. dst is server
-        check1 = int(
-            pkt_class, 16) == 0x00 and ip_dict[src[0]]["Client_flag"] == True and ip_dict[dst[0]]["Server_flag"] == True
-        if (check1):
-            ip_dict[src[0]]["Client_name"] = client_name
+    #     soup = BeautifulSoup(html, "html.parser")
+    #     div_element = soup.find("div", id="block-company")
+    #     text_element = div_element.find("strong", class_="d-block font-size-26 mt-2")
+    #     return text_element.get_text(strip=True)
+
+    def get_ip_company(ip):
+        # Replace with the actual path to your GeoLite2-ASN database file
+        reader = geoip2.database.Reader('GeoLite2-ASN.mmdb')
+        try:
+            response = reader.asn(ip)
+            asn = response.autonomous_system_organization
+            return asn
+        except geoip2.errors.AddressNotFoundError:
+            return "Not found"
+
+    for stun_method in pkts_classified['stun']:
+        packets = pkts_classified['stun'][stun_method]['packets']
+        for pkt in packets:
+            src, dst = get_src_and_dst(pkt)
+            add_to_ip_dict(ip_dict, src)
+            add_to_ip_dict(ip_dict, dst)
+            try:
+                ip_dict[src[0]]["ip_host"] = pkt['_source']['layers']['ip']['ip.src_host']
+                ip_dict[dst[0]]["ip_host"] = pkt['_source']['layers']['ip']['ip.dst_host']
+            except:
+                ip_dict[src[0]]["ip_host"] = pkt['_source']['layers']['ipv6']['ipv6.src_host']
+                ip_dict[dst[0]]["ip_host"] = pkt['_source']['layers']['ipv6']['ipv6.dst_host']
+            if ("stun.attributes" in pkt['_source']['layers']['stun']):
+                attr_list, detail_list = get_stun_attributes(pkt)
+                check_xor_mapped_address(
+                    ip_dict, dst, src, attr_list, detail_list)
+                check_xor_relayed_address(
+                    ip_dict, src, dst, attr_list, detail_list)
+                check_xor_peer_address(
+                    ip_dict, src, dst, attr_list, detail_list)
+
+    # first determination of source name and type
+    for ip in ip_dict:
+        ip_type = ip_dict[ip]["ip_type"]
+        if (ip_type == "Private"):
+            ip_dict[ip]["source_type"] = "Client"
+            if ('XOR-MAPPED-ADDRESS' in ip_dict[ip]):
+                for mapped in ip_dict[ip]['XOR-MAPPED-ADDRESS']:
+                    check1 = ip_dict[ip]["client_name"] == ""
+                    check2 = ip_dict[mapped['by'][0]]["ip_type"] == "Public"
+                    if (check1 and check2):
+                        ip_dict[ip]["client_name"] = client_name
+                        break
+        elif (ip_type == "Public"):
+            ip_dict[ip]["source_name"] = get_ip_company(ip)
+            if ('XOR-RELAYED-ADDRESS' in ip_dict[ip]):
+                for relayed in ip_dict[ip]['XOR-RELAYED-ADDRESS']:
+                    if (relayed['by'][0] == ip):
+                        ip_dict[ip]["source_type"] = "Server"
+                        break
+            elif ('XOR-MAPPED-ADDRESS' in ip_dict[ip]):
+                for mapped in ip_dict[ip]['XOR-MAPPED-ADDRESS']:
+                    check1 = ip_dict[mapped['from']
+                                     [0]]["ip_type"] == "Private"
+                    check2 = mapped['to'][0] == ip
+                    check3 = ip_dict[mapped['by'][0]]["ip_type"] == "Public"
+                    if (check1 and check2 and check3):
+                        ip_dict[ip]["source_type"] = "NAT"
+                        break
+
+    # second determination of source name and type
+    for ip in ip_dict:
+        ip_type = ip_dict[ip]["ip_type"]
+        if ('XOR-MAPPED-ADDRESS' in ip_dict[ip]):
+            if (ip_dict[ip]["source_type"] == "NAT"):
+                for mapped in ip_dict[ip]['XOR-MAPPED-ADDRESS']:
+                    name_list = ip_dict[mapped['from'][0]]["client_name"].split(" ")
+                    if (client_name in name_list):
+                        ip_dict[ip]["client_name"] += client_name + " "
+                        break
+            if (ip_dict[ip]['ip_version'] == 'IPv6'):
+                for mapped in ip_dict[ip]['XOR-MAPPED-ADDRESS']:
+                    check1 = mapped['from'][0] == ip
+                    check2 = ip_dict[mapped['by'][0]]["source_type"] == "Server"
+                    if (check1 and check2):
+                        ip_dict[ip]["source_type"] = "Client"
+                        if (ip_dict[ip]["client_name"] == ""):
+                            ip_dict[ip]["client_name"] = client_name
+                        break
 
     # return copy.deepcopy(ip_dict)
 
@@ -435,17 +495,30 @@ def get_ip_filter(ip_dict, client_name):
     def no_client_ip(ip_dict, client_name):
         new_ip_list = []
         for ip in ip_dict:
-            if (ip_dict[ip]["Client_name"] != client_name):
+            check1 = ip_dict[ip]["client_name"] != client_name
+            check2 = ip_dict[ip]["source_type"] != "NAT"
+            if (check1):
                 new_ip_list.append(ip)
         return new_ip_list
 
-    ip_list = list(ip_dict.keys())
+    # ip_list = list(ip_dict.keys())
     # print(ip_list)
     new_ip_list = no_client_ip(ip_dict, client_name)
-    print(f'\n{new_ip_list}\n')
+    # print(f'{new_ip_list}\n')
     filter_code = ip_filter.generate_display_filter(new_ip_list)
-    print(f'\n{filter_code}\n')
+    print(f'{filter_code}\n')
     return filter_code
+
+
+def save_dict_to_json(data, filename):
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+
+
+def load_dict_from_json(filename):
+    with open(filename, 'r') as json_file:
+        data = json.load(json_file)
+    return data
 
 
 def count_transaction(transaction_dict, pkts_json):
@@ -454,43 +527,95 @@ def count_transaction(transaction_dict, pkts_json):
 
 
 if __name__ == "__main__":
-    path = base_dir + divider + "inputs" + divider
-    caller_file = path + 'packets_caller.pcapng'
-    receiver_file = path + 'packets_receiver.pcapng'
+    import time
+
+    input_path = base_dir + divider + "inputs" + divider
+    output_path = base_dir + divider + "outputs" + divider
+
+    caller_file = input_path + 'packets_caller.pcapng'
+    receiver_file = input_path + 'packets_receiver.pcapng'
     stun_filter = 'stun'
     client_names = ["caller", "receiver"]
     ip_dict = {}
     transaction_dict = {}
+    add_arg = "-NNnd"
 
-    name = caller_file.split(divider)[-1].split('.')[0] + '.json'
-    caller_json = get_packet_json(caller_file, name, stun_filter)
-    name = receiver_file.split(divider)[-1].split('.')[0] + '.json'
-    receiver_json = get_packet_json(receiver_file, name, stun_filter)
+    time1 = time.time()
 
-    temp_dict = {}
-    caller_stun_classified = classify_packets(temp_dict, caller_json)
-    get_ip_relations(ip_dict, temp_dict, client_names[0])
-    temp_dict = {}
-    receiver_stun_classified = classify_packets(temp_dict, receiver_json)
-    get_ip_relations(ip_dict, temp_dict, client_names[1])
-    stun_classified_dict = classify_packets(temp_dict, caller_json)
+    try:
+        name = caller_file.split(divider)[-1].split('.')[0] + '.json'
+        caller_json = load_dict_from_json(input_path + 'caller.json')
+        name = receiver_file.split(divider)[-1].split('.')[0] + '.json'
+        receiver_json = load_dict_from_json(input_path + 'receiver.json')
+    except:
+        name = caller_file.split(divider)[-1].split('.')[0] + '.json'
+        caller_json = get_packet_json(caller_file, name, stun_filter, add_arg)
+        save_dict_to_json(caller_json, output_path + name)
+        name = receiver_file.split(divider)[-1].split('.')[0] + '.json'
+        receiver_json = get_packet_json(
+            receiver_file, name, stun_filter, add_arg)
+        save_dict_to_json(receiver_json, output_path + name)
+
+    time2 = time.time()
+    print(f'\nGet STUN packets: {time2 - time1}\n')
+
+    try:
+        ip_dict = load_dict_from_json('ip_dict.json')
+        all_classified_caller = load_dict_from_json(
+            input_path + 'all_classified_caller.json')
+        all_classified_receiver = load_dict_from_json(
+            input_path + 'all_classified_receiver.json')
+    except:
+        all_classified_caller = {}
+        classify_packets(all_classified_caller, caller_json)
+        get_ip_relations(ip_dict, all_classified_caller, client_names[0])
+        all_classified_receiver = {}
+        classify_packets(all_classified_receiver, receiver_json)
+        get_ip_relations(ip_dict, all_classified_receiver, client_names[1])
+        save_dict_to_json(ip_dict, output_path + 'ip_dict.json')
+        save_dict_to_json(all_classified_caller,
+                          output_path + 'all_classified_caller.json')
+        save_dict_to_json(all_classified_receiver,
+                          output_path + 'all_classified_receiver.json')
 
     caller_ip_filter_code = get_ip_filter(ip_dict, client_names[0])
     receiver_ip_filter_code = get_ip_filter(ip_dict, client_names[1])
 
-    temp_dict = {}
-    name = caller_file.split(divider)[-1].split('.')[0] + '_all.json'
-    caller_all_json = get_packet_json(caller_file, name, caller_ip_filter_code)
-    name = receiver_file.split(divider)[-1].split('.')[0] + '_all.json'
-    receiver_all_json = get_packet_json(
-        receiver_file, name, receiver_ip_filter_code)
+    time3 = time.time()
+    print(f'\nProcess STUN packtes: {time3 - time2}\n')
 
+    try:
+        name = caller_file.split(divider)[-1].split('.')[0] + '_all.json'
+        caller_all_json = load_dict_from_json(input_path + name)
+        name = receiver_file.split(divider)[-1].split('.')[0] + '.json'
+        receiver_all_json = load_dict_from_json(input_path + name)
+    except:
+        name = caller_file.split(divider)[-1].split('.')[0] + '_all.json'
+        caller_all_json = get_packet_json(
+            caller_file, name, caller_ip_filter_code, add_arg)
+        save_dict_to_json(caller_all_json, output_path + name)
+        name = receiver_file.split(divider)[-1].split('.')[0] + '_all.json'
+        receiver_all_json = get_packet_json(
+            receiver_file, name, receiver_ip_filter_code, add_arg)
+        save_dict_to_json(receiver_all_json, output_path + name)
+
+    time4 = time.time()
+    print(f'\nGet all packets: {time4 - time3}\n')
+
+    try:
+        all_classified_dict = load_dict_from_json(input_path + "all_classified.json")
+    except:
+        classify_packets(all_classified_caller, caller_all_json)
+        all_classified_dict = classify_packets(
+            all_classified_receiver, receiver_all_json, copy_result=True)
+        classify_packets(all_classified_dict, caller_all_json)
+        save_dict_to_json(all_classified_dict, output_path + 'all_classified.json')
+    
     all_json = caller_all_json + receiver_all_json
-    temp_dict = {}
-    caller_all_classified = classify_packets(temp_dict, caller_all_json)
-    temp_dict = {}
-    receiver_all_classified = classify_packets(temp_dict, receiver_all_json)
-    all_classified_dict = classify_packets(temp_dict, caller_all_json)
+
+    time5 = time.time()
+
+    print(f'\nProcess all packets: {time5 - time4}\n')
 
     print(f"STUN Count: {len(caller_json)}, {len(receiver_json)}")
     print(f"All Count: {len(caller_all_json)}, {len(receiver_all_json)}")
