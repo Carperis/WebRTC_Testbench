@@ -573,10 +573,6 @@ if __name__ == "__main__":
         classify_packets(all_classified_receiver, receiver_json)
         get_ip_relations(ip_dict, all_classified_receiver, client_names[1])
         save_dict_to_json(ip_dict, output_path + 'ip_dict.json')
-        save_dict_to_json(all_classified_caller,
-                          output_path + 'all_classified_caller.json')
-        save_dict_to_json(all_classified_receiver,
-                          output_path + 'all_classified_receiver.json')
 
     caller_ip_filter_code = get_ip_filter(ip_dict, client_names[0])
     receiver_ip_filter_code = get_ip_filter(ip_dict, client_names[1])
@@ -604,12 +600,19 @@ if __name__ == "__main__":
 
     try:
         all_classified_dict = load_dict_from_json(input_path + "all_classified.json")
+        all_classified_caller = load_dict_from_json(
+            input_path + 'all_classified_caller.json')
+        all_classified_receiver = load_dict_from_json(
+            input_path + 'all_classified_receiver.json')
     except:
         classify_packets(all_classified_caller, caller_all_json)
-        all_classified_dict = classify_packets(
-            all_classified_receiver, receiver_all_json, copy_result=True)
+        save_dict_to_json(all_classified_caller, output_path + 'all_classified_caller.json')
+        all_classified_dict = classify_packets(all_classified_receiver, receiver_all_json, copy_result=True)
+        save_dict_to_json(all_classified_receiver, output_path + 'all_classified_receiver.json')
         classify_packets(all_classified_dict, caller_all_json)
         save_dict_to_json(all_classified_dict, output_path + 'all_classified.json')
+        
+        
     
     all_json = caller_all_json + receiver_all_json
 
