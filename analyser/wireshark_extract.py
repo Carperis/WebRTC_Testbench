@@ -472,14 +472,16 @@ def get_ip_relations(ip_dict, pkts_classified, client_name):
         if ('XOR-MAPPED-ADDRESS' in ip_dict[ip]):
             if (ip_dict[ip]["source_type"] == "NAT"):
                 for mapped in ip_dict[ip]['XOR-MAPPED-ADDRESS']:
-                    name_list = ip_dict[mapped['from'][0]]["client_name"].split(" ")
+                    name_list = ip_dict[mapped['from']
+                                        [0]]["client_name"].split(" ")
                     if (client_name in name_list):
                         ip_dict[ip]["client_name"] += client_name + " "
                         break
             if (ip_dict[ip]['ip_version'] == 'IPv6'):
                 for mapped in ip_dict[ip]['XOR-MAPPED-ADDRESS']:
                     check1 = mapped['from'][0] == ip
-                    check2 = ip_dict[mapped['by'][0]]["source_type"] == "Server"
+                    check2 = ip_dict[mapped['by'][0]
+                                     ]["source_type"] == "Server"
                     if (check1 and check2):
                         ip_dict[ip]["source_type"] = "Client"
                         if (ip_dict[ip]["client_name"] == ""):
@@ -538,7 +540,8 @@ if __name__ == "__main__":
     client_names = ["caller", "receiver"]
     ip_dict = {}
     transaction_dict = {}
-    add_arg = "-NNnd"
+    wireshark_profile = "WebRTC"
+    add_arg = "-NNnd -C " + wireshark_profile
 
     time1 = time.time()
 
@@ -574,8 +577,16 @@ if __name__ == "__main__":
         get_ip_relations(ip_dict, all_classified_receiver, client_names[1])
         save_dict_to_json(ip_dict, output_path + 'ip_dict.json')
 
-    caller_ip_filter_code = get_ip_filter(ip_dict, client_names[0])
-    receiver_ip_filter_code = get_ip_filter(ip_dict, client_names[1])
+    try:
+        ip_filter_dict = load_dict_from_json('ip_filter.json')
+        caller_ip_filter_code = ip_filter_dict[client_names[0]]
+        receiver_ip_filter_code = ip_filter_dict[client_names[1]]
+    except:
+        caller_ip_filter_code = get_ip_filter(ip_dict, client_names[0])
+        receiver_ip_filter_code = get_ip_filter(ip_dict, client_names[1])
+        ip_filter_dict = {
+            client_names[0]: caller_ip_filter_code, client_names[1]: receiver_ip_filter_code}
+        save_dict_to_json(ip_filter_dict, output_path + 'ip_filter.json')
 
     time3 = time.time()
     print(f'\nProcess STUN packtes: {time3 - time2}\n')
@@ -599,21 +610,24 @@ if __name__ == "__main__":
     print(f'\nGet all packets: {time4 - time3}\n')
 
     try:
-        all_classified_dict = load_dict_from_json(input_path + "all_classified.json")
+        all_classified_dict = load_dict_from_json(
+            input_path + "all_classified.json")
         all_classified_caller = load_dict_from_json(
             input_path + 'all_classified_caller.json')
         all_classified_receiver = load_dict_from_json(
             input_path + 'all_classified_receiver.json')
     except:
         classify_packets(all_classified_caller, caller_all_json)
-        save_dict_to_json(all_classified_caller, output_path + 'all_classified_caller.json')
-        all_classified_dict = classify_packets(all_classified_receiver, receiver_all_json, copy_result=True)
-        save_dict_to_json(all_classified_receiver, output_path + 'all_classified_receiver.json')
+        save_dict_to_json(all_classified_caller,
+                          output_path + 'all_classified_caller.json')
+        all_classified_dict = classify_packets(
+            all_classified_receiver, receiver_all_json, copy_result=True)
+        save_dict_to_json(all_classified_receiver,
+                          output_path + 'all_classified_receiver.json')
         classify_packets(all_classified_dict, caller_all_json)
-        save_dict_to_json(all_classified_dict, output_path + 'all_classified.json')
-        
-        
-    
+        save_dict_to_json(all_classified_dict,
+                          output_path + 'all_classified.json')
+
     all_json = caller_all_json + receiver_all_json
 
     time5 = time.time()
