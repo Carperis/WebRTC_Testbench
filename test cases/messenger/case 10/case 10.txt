@@ -12,3 +12,14 @@ time_points = [
     "Caller and Receiver leave the call.",
 ]
 
+Summary:
+2023-07-20 18:46:06.901577: Caller initiates the call
+2023-07-20 18:46:16.177509: Receiver takes the call
+2023-07-20 18:46:37.561765: Caller closes the camera.
+2023-07-20 18:46:40.146784: Caller reopens the camera.
+2023-07-20 18:46:48.210525: Caller switches to cellular network.
+2023-07-20 18:46:57.308654: Caller switches back to wifi.
+2023-07-20 18:47:06.964608: Caller and Receiver leave the call.
+
+Filter:
+(frame.time >= "2023-07-20 18:46:06.401577" and frame.time <= "2023-07-20 18:47:07.464608")
