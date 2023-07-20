@@ -22,9 +22,6 @@ time_points = [
     "Client A rejoins the new room (switch to).",
     "Client B leaves the old room.",
     "Client B joins the new room.",
-    "Client A leaves the new room.",
-    "Client B leaves the new room.",
-    "Client C leaves the new room",
     "Client C terminates the new room."
 ]
 
