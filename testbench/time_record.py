@@ -2,6 +2,7 @@ import datetime
 import time
 import os
 
+# make sure all devices are in the same time zone, and the time is synced.
 
 def record_time(str):
     input(f"Press Enter @ {str}: ")
