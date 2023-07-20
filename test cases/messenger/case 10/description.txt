@@ -1,0 +1,3 @@
+Caller: mobile app, iPhone, wifi at home, disable local network
+Receiver: mobile app, iPad, wifi at home, disable local network
+
