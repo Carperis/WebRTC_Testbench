@@ -3,8 +3,8 @@ Receiver: mobile app, iPad, wifi at home (10.0.0.251), disable local network
 
 
 time_points = [
-    "Caller initiates the call",
-    "Receiver takes the call",
+    "Caller initiates the call.",
+    "Receiver takes the call.",
     "Caller closes the camera.",
     "Caller reopens the camera.",
     "Caller switches to cellular network.",
