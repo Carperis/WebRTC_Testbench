@@ -4,6 +4,7 @@ import os
 
 # make sure all devices are in the same time zone, and the time is synced.
 
+
 def record_time(str):
     input(f"Press Enter @ {str}: ")
     current_time = datetime.datetime.now()
@@ -33,26 +34,28 @@ if (os.system('clear') == 1):
     os.system('cls')
 
 time_points = [
-    "Client A joins a channel and opens the camera.",
-    "Client B joins the channel and opens the camera.",
-    "Client C joins the channel and opens the camera.",
-    "Client A closes the camera.",
-    "Client A reopens the camera.",
+    "Client C initiates a meeting link, shares the link to Client A and Client B, and joins the room.",
+    "Client B joins the room.",
+    "Client A joins the room.",
+    "Client B closes the camera.",
+    "Client B reopens the camera.",
     "Client A switches to cellular network.",
-    "Client A leaves the channel.",
-    "Client A rejoins the channel.",
+    "Client A leaves the room.",
+    "Client A rejoins the room.",
     "Client A switches back to wifi.",
-    "Client C leaves the channel.",
-    "Client C joins a new channel.",
-    "Client A leaves the old channel.",
-    "Client A joins the new channel.",
-    "Client A switches to the old channel.",
-    "Client A switches to the new channel.",
-    "Client B leaves the old channel.",
-    "Client B joins the new channel.",
-    "Client A leaves the new channel.",
-    "Client B leaves the new channel.",
-    "Client C leaves the new channel."
+    "Client C leaves the room.",
+    "Client C initiates a new meeting link, shares the link to Client A and Client B, and joins the room.",
+    "Client A leaves the old room.",
+    "Client A joins the new room.",
+    "Client A leaves the new room (switch from).",
+    "Client A rejoins the old room (switch to).",
+    "Client B leaves the old room.",
+    "Client B joins the new room.",
+    "Client A leaves the old room (switch from).",
+    "Client A rejoins the new room (switch to).",
+    "Client A leaves the new room.",
+    "Client B leaves the new room.",
+    "Client C leaves the new room."
 ]
 
 time_dict = {}
