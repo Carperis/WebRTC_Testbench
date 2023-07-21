@@ -1,6 +1,6 @@
-Client A: mobile app, iPhone, wifi at home, disable local network
-Client B: mobile app, iPad, wifi at home, disable local network
-Client C: desktop app, Macbook, wifi at home, block ip address
+Client A: mobile app, iPhone, wifi at home (10.0.0.140), disable local network
+Client B: mobile app, iPad, wifi at home (10.0.0.251), disable local network
+Client C: desktop app, Macbook, wifi at home (10.0.0.236), block ip address
 
 time_points = [
     "Client A initiates a meeting room via direct invitation to Client B and Client C.",
@@ -41,7 +41,7 @@ Summary:
 2023-07-20 19:09:11.929401: Client A joins the new room.
 2023-07-20 19:09:17.813575: Client A leaves the new room (switch from).
 2023-07-20 19:09:23.328507: Client A rejoins the old room (switch to).
-2023-07-20 19:09:30.109516: Client A leaves the old room (switch from).*
+2023-07-20 19:09:29.109516: Client A leaves the old room (switch from).*
 2023-07-20 19:09:37.421809: Client A rejoins the new room (switch to).
 2023-07-20 19:09:46.507973: Client B leaves the old room.
 2023-07-20 19:09:54.626255: Client B joins the new room.

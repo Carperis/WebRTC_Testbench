@@ -1,5 +1,5 @@
-Caller: mobile app, iPhone, wifi at home, disable local network
-Receiver: mobile app, iPad, wifi at home, disable local network
+Caller: mobile app, iPhone, wifi at home (10.0.0.140), disable local network
+Receiver: mobile app, iPad, wifi at home (10.0.0.251), disable local network
 
 
 time_points = [
@@ -13,8 +13,8 @@ time_points = [
 ]
 
 Summary:
-2023-07-20 18:46:06.901577: Caller initiates the call
-2023-07-20 18:46:16.177509: Receiver takes the call
+2023-07-20 18:46:06.901577: Caller initiates the call.
+2023-07-20 18:46:16.177509: Receiver takes the call.
 2023-07-20 18:46:37.561765: Caller closes the camera.
 2023-07-20 18:46:40.146784: Caller reopens the camera.
 2023-07-20 18:46:48.210525: Caller switches to cellular network.
