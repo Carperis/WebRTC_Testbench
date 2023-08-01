@@ -33,6 +33,9 @@ Summary:
 Filter:
 (frame.time >= "2023-07-21 13:37:49.728084" and frame.time <= "2023-07-21 13:37:57.859301"): Caller initiates the call.
 (frame.time >= "2023-07-21 13:37:57.859301" and frame.time <= "2023-07-21 13:38:04.979460"): Receiver takes the call.
+(frame.time >= "2023-07-21 13:38:04.979460" and frame.time <= "2023-07-21 13:38:09.214887"): Caller closes the camera.
+(frame.time >= "2023-07-21 13:38:09.214887" and frame.time <= "2023-07-21 13:38:13.253349"): Caller reopens the camera.
+
 
 Caller: (ip.addr == 66.22.214.131 or ip.addr == 10.0.0.251)
 
