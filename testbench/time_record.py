@@ -34,28 +34,13 @@ if (os.system('clear') == 1):
     os.system('cls')
 
 time_points = [
-    "Client C initiates a meeting link, shares the link to Client A and Client B, and joins the room.",
-    "Client B joins the room.",
-    "Client A joins the room.",
-    "Client B closes the camera.",
-    "Client B reopens the camera.",
-    "Client A switches to cellular network.",
-    "Client A leaves the room.",
-    "Client A rejoins the room.",
-    "Client A switches back to wifi.",
-    "Client C leaves the room.",
-    "Client C initiates a new meeting link, shares the link to Client A and Client B, and joins the room.",
-    "Client A leaves the old room.",
-    "Client A joins the new room.",
-    "Client A leaves the new room (switch from).",
-    "Client A rejoins the old room (switch to).",
-    "Client B leaves the old room.",
-    "Client B joins the new room.",
-    "Client A leaves the old room (switch from).",
-    "Client A rejoins the new room (switch to).",
-    "Client A leaves the new room.",
-    "Client B leaves the new room.",
-    "Client C leaves the new room."
+    "Caller initiates the call.",
+    "Receiver takes the call.",
+    "Caller closes the camera.",
+    "Caller reopens the camera.",
+    "Caller switches to cellular network.",
+    "Caller switches back to wifi.",
+    "Caller and Receiver leave the call.",
 ]
 
 time_dict = {}
