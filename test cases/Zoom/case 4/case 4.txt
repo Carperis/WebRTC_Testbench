@@ -14,7 +14,7 @@ time_points = [
     "Client A switches back to wifi.",
     "Client C leaves the room.",
     "Client C initiates a new meeting room and shares a link with Client A and Client B.",
-    "Client A leaves the old room.",
+    "Client A leaves the old room and assigns Client B to be host.",
     "Client A joins the new room via the link.",
     "Client A switches to the old room via the old link.",
     "Client A switches to the new room via the new link.",
