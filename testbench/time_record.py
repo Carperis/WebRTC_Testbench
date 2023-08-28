@@ -34,13 +34,18 @@ if (os.system('clear') == 1):
     os.system('cls')
 
 time_points = [
-    "Caller initiates the call.",
-    "Receiver takes the call.",
+    "Caller initiates the call and shares a link to Receiver.",
+    "Receiver joins the call via the link.",
     "Caller closes the camera.",
     "Caller reopens the camera.",
+    "Caller leaves the call and assigns Receiver to be host.",
+    "Caller rejoins the call.",
     "Caller switches to cellular network.",
+    "Caller leaves the call.",
+    "Caller rejoins the call.",
     "Caller switches back to wifi.",
-    "Caller and Receiver leave the call.",
+    "Caller leaves the call.",
+    "Receiver leaves and ends the call."
 ]
 
 time_dict = {}
