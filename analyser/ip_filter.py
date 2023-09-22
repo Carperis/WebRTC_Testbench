@@ -120,8 +120,8 @@ if __name__ == "__main__":
     ip_list = read_file_into_list(file_path)
     print("{} IP addresses.".format(len(ip_list)))
 
-    # filter_code = generate_simple_display_filter(ip_list)
-    # print(f'\n({filter_code})\n')
+    filter_code = generate_simple_display_filter(ip_list)
+    print(f'\n({filter_code})\n')
 
-    for ip in ip_list:
-        print(f'{get_ip_company(ip)}: {ip}')
+    # for ip in ip_list:
+    #     print(f'{get_ip_company(ip)}: {ip}')
