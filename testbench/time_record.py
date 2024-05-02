@@ -34,27 +34,38 @@ if (os.system('clear') == 1):
     os.system('cls')
 
 time_points = [
-    "Client A initiates a meeting room and shares a link with Client B and Client C.",
-    "Client B joins the room via the link.",
-    "Client C joins the room via the link.",
-    "Client A closes the camera.",
-    "Client A reopens the camera.",
-    "Client A switches to cellular network.",
-    "Client A leaves the room and assigns Client B to be host.",
-    "Client A rejoins the room.",
-    "Client A switches back to wifi.",
-    "Client C leaves the room.",
-    "Client C initiates a new meeting room and shares a link with Client A and Client B.",
-    "Client A leaves the old room.",
-    "Client A joins the new room via the link.",
-    "Client A switches to the old room via the old link.",
-    "Client A switches to the new room via the new link.",
-    "Client B leaves and ends the old room.",
-    "Client B joins the new room via the link.",
-    "Client A leaves the new room.",
-    "Client B leaves the new room.",
-    "Client C leaves and ends the new room."
+    "Caller initiates the call under wifi with the camera and microphone opened.",
+    "Callee takes the call under wifi with the camera and microphone opened.",
+    "Caller closes the camera.",
+    "Caller closes the microphone.",
+    "Caller reopens the camera and microphone.",
+    "Caller leaves the call.",
+    "Caller rejoins the call.",
+    "Caller switches to cellular network.",
+    "Caller closes the camera.",
+    "Caller closes the microphone.",
+    "Caller reopens the camera and microphone.",
+    "Caller leaves the call.",
+    "Caller rejoins the call.",
+    "Caller switches back to wifi.",
+    "Caller leaves the call.",
+    "Callee leaves the call."
 ]
+
+# time_points = [
+#     "Caller initiates the call under wifi with the camera and microphone opened.",
+#     "Callee takes the call under wifi with the camera and microphone opened.",
+#     "Caller closes the camera.",
+#     "Caller closes the microphone.",
+#     "Caller reopens the camera and microphone.",
+#     "Caller switches to cellular network.",
+#     "Caller closes the camera.",
+#     "Caller closes the microphone.",
+#     "Caller reopens the camera and microphone.",
+#     "Caller switches back to wifi.",
+#     "Caller leaves the call.",
+#     "Callee leaves the call."
+# ]
 
 time_dict = {}
 
