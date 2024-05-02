@@ -108,20 +108,19 @@ def get_ip_company(ip):
 
 
 if __name__ == "__main__":
-    # ip_list = ['10.239.161.0', '157.240.245.58', '157.240.245.22', '157.240.240.58', '204.8.153.51', '10.192.48.247', '31.13.80.3', '128.197.29.224']
-    # ip_list = ['10.0.0.191', '157.240.245.58', '2601:19b:80:c980:fd90:d9f3:437e:ed71', '2a03:2880:f272:d0:face:b00c:0:553e', '157.240.245.22', '2a03:2880:f07e:17:face:b00c:0:24d9', '10.0.0.236', '2601:19b:80:c980:41fd:53de:d545:c74c', '73.16.29.250']
-    # print(ip_list)
-    # new_ip_list = no_private_ip(ip_list)
-    # print(new_ip_list)
-    # filter_code = generate_display_filter(new_ip_list)
-    # print(f'\n{filter_code}\n')
-
     file_path = base_dir + divider + 'ip_addresses.txt'
     ip_list = read_file_into_list(file_path)
     print("{} IP addresses.".format(len(ip_list)))
+    
+    # Function 1: get filter code for only public IP addresses in the list
+    # new_ip_list = no_private_ip(ip_list)
+    # filter_code = generate_display_filter(new_ip_list)
+    # print(f'\n{filter_code}\n')
 
+    # Function 2: get filter code for all IP addresses in the list
     filter_code = generate_simple_display_filter(ip_list)
     print(f'\n({filter_code})\n')
 
+    # Function 3: get company name for each IP address in the list
     # for ip in ip_list:
     #     print(f'{get_ip_company(ip)}: {ip}')
