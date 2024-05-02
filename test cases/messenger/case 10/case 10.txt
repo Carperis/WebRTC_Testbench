@@ -1,4 +1,4 @@
-Caller: mobile app, iPhone, wifi at home (10.0.0.140), disable local network
+·			Caller: mobile app, iPhone, wifi at home (10.0.0.140), disable local network
 Receiver: mobile app, iPad, wifi at home (10.0.0.251), disable local network
 
 
@@ -39,3 +39,4 @@ Receiver: (ipv6.addr == 2a03:2880:f07e:17:face:b00c:0:24d9 or ipv6.addr == 2a03:
 Caller cleaned: (ip.addr == 10.0.0.251 or ip.addr == 157.240.22.33 or ip.addr == 157.240.241.53 or ip.addr == 157.240.245.22 or ip.addr == 157.240.245.56 or ip.addr == 157.240.245.58 or ipv6.addr == 2601:19b:80:c980:1486:4e93:69f:b88 or ipv6.addr == 2a03:2880:f031:6:face:b00c:0:24d9 or ipv6.addr == 2a03:2880:f07e:17:face:b00c:0:24d9 or ipv6.addr == 2a03:2880:f212:1c6:face:b00c:0:74fd or ipv6.addr == 2a03:2880:f212:ca:face:b00c:0:74fd or ipv6.addr == 2a03:2880:f272:ce:face:b00c:0:74fd or ipv6.addr == 2a03:2880:f272:d0:face:b00c:0:553e or ip.addr == 31.13.71.128 or ip.addr == 73.16.29.250 or ip.addr == 107.122.192.98) and (frame.time >= "")
 
 Receiver cleaned: (ip.addr == 10.0.0.140 or ip.addr == 10.75.226.255 or ip.addr == 157.240.22.33 or ip.addr == 157.240.241.53 or ip.addr == 157.240.245.22 or ip.addr == 157.240.245.56 or ip.addr == 157.240.245.58 or ip.addr == 192.0.0.6 or ipv6.addr == 2409:8180:404:26aa:dc6a:38da:cfaf:fd09 or ipv6.addr == 2600:381:435a:b456:d0cc:4798:24be:fc67 or ipv6.addr == 2601:19b:80:c980:2533:49af:4635:af35 or ipv6.addr == 2601:19b:80:c980:956f:39c4:4577:2e51 or ipv6.addr == 2a03:2880:f031:6:face:b00c:0:24d9 or ipv6.addr == 2a03:2880:f07e:17:face:b00c:0:24d9 or ipv6.addr == 2a03:2880:f212:1c6:face:b00c:0:74fd or ipv6.addr == 2a03:2880:f212:ca:face:b00c:0:74fd or ipv6.addr == 2a03:2880:f272:ce:face:b00c:0:74fd or ipv6.addr == 2a03:2880:f272:d0:face:b00c:0:553e or ip.addr == 31.13.71.128 or ipv6.addr == fd74:6572:6d6e:7573:c:42ea:30d3:3fe7 or ipv6.addr == fd74:6572:6d6e:7573:d:42ea:30d3:3fe7 or ip.addr == 73.16.29.250 or ip.addr == 107.122.192.98) and (frame.time >= "")
+
