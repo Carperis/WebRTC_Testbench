@@ -36,3 +36,21 @@ Filter:
 Caller: (ip.addr == 10.0.0.251 or ip.addr == 17.138.144.4 or ip.addr == 17.145.52.65 or ip.addr == 17.248.131.4 or ip.addr == 17.249.192.154 or ip.addr == 17.57.144.119 or ip.addr == 17.57.147.4 or ip.addr == 17.57.147.6 or ip.addr == 17.57.147.7 or ip.addr == 17.57.172.6 or ipv6.addr == 2601:19b:80:c980:1486:4e93:69f:b88 or ipv6.addr == 2601:19b:80:c980:f5c0:9926:1058:829f or ipv6.addr == 2620:149:a09:f100::4 or ipv6.addr == 2620:149:a41:100::4 or ipv6.addr == 2620:149:a41:100::9 or ipv6.addr == 2620:149:a41:106::6 or ipv6.addr == 2620:149:a41:107::a or ipv6.addr == 2620:149:a41:109::b)
 
 Receiver: (ip.addr == 10.0.0.140 or ip.addr == 10.75.226.255 or ip.addr == 17.138.144.4 or ip.addr == 17.145.52.65 or ip.addr == 17.248.131.4 or ip.addr == 17.249.192.154 or ip.addr == 17.57.144.119 or ip.addr == 17.57.147.4 or ip.addr == 17.57.147.6 or ip.addr == 17.57.147.7 or ip.addr == 17.57.172.6 or ipv6.addr == 2601:19b:80:c980:75f9:8307:c0bb:ab67 or ipv6.addr == 2601:19b:80:c980:a10b:c687:f529:357a or ipv6.addr == 2620:149:a09:f100::4 or ipv6.addr == 2620:149:a41:100::4 or ipv6.addr == 2620:149:a41:100::9 or ipv6.addr == 2620:149:a41:106::6 or ipv6.addr == 2620:149:a41:107::a or ipv6.addr == 2620:149:a41:109::b)
+
+
+
+# Clear cached credentials
+git credential-cache exit
+
+# Remove stored credentials (macOS specific)
+git credential-osxkeychain erase
+
+# Configure Git to use the macOS Keychain
+git config --global credential.helper osxkeychain
+
+# Set new GitHub username and email for the repository
+git config --global user.name "RTC-Measurement-Project"
+git config --global user.email "2505671918@qq.com"
+
+# Push changes, then enter the new username and PAT when prompted
+git push

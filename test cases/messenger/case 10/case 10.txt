@@ -1,4 +1,4 @@
-·			Caller: mobile app, iPhone, wifi at home (10.0.0.140), disable local network
+Caller: mobile app, iPhone, wifi at home (10.0.0.140), disable local network
 Receiver: mobile app, iPad, wifi at home (10.0.0.251), disable local network
 
 
