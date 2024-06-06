@@ -1,0 +1,12 @@
+Caller initiates a call link and joins the call.
+Callee joins the call.
+Callee closes the camera.
+Callee reopens the camera.
+Caller leaves the call.
+Caller rejoins the call.
+Caller switches to cellular network.
+Caller leaves the call.
+Caller rejoins the call.
+Caller switches back to WiFi.
+Caller leaves the call.
+Callee leaves the call.

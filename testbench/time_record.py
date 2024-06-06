@@ -5,7 +5,7 @@ import os
 # make sure all devices are in the same time zone, and the time is synced.
 
 
-def record_time(str):
+def record_time(str, time_dict):
     input(f"Press Enter @ {str}: ")
     current_time = datetime.datetime.now()
     time_string = current_time.strftime("%Y-%m-%d %H:%M:%S.%f%z")
@@ -52,7 +52,7 @@ time_points = [
 time_dict = {}
 
 for time_point in time_points:
-    record_time(time_point)
+    record_time(time_point, time_dict)
 
 print("\nSummary:")
 for key in time_dict:
