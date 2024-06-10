@@ -131,7 +131,8 @@ if __name__ == "__main__":
         for d in interfaces.keys():
             cap_name = app_name + "_" + test_name + "_No" + \
                 str(test_round) + "_" + str(devices[d]) + '.pcapng'
-            nc_filter_codes.append(nc.main(cap_name, duration_seconds=noise_duration))
+            # nc_filter_codes.append(nc.main(cap_name, duration_seconds=noise_duration))
+            nc_filter_codes.append(nc.main(cap_name, end_time=time_dict[list(time_dict.keys())[0]]))
 
         # write to txt file
         file_name = app_name + "_" + test_name + \
