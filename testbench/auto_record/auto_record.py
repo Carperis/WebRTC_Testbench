@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     process_list = []
     for d in interfaces.keys():
-        cap_name = app_name + "_" + test_name + "_No" + \
+        cap_name = app_name + "_" + test_name + "_t" + \
             str(test_round) + "_" + str(devices[d]) + '.pcapng'
         process = tshark_init('tshark', interfaces[d], cap_name)
         process_list.append(process)
@@ -129,14 +129,14 @@ if __name__ == "__main__":
 
         nc_filter_codes = []
         for d in interfaces.keys():
-            cap_name = app_name + "_" + test_name + "_No" + \
+            cap_name = app_name + "_" + test_name + "_t" + \
                 str(test_round) + "_" + str(devices[d]) + '.pcapng'
             nc_filter_codes.append(nc.main(cap_name, duration_seconds=noise_duration))
             # nc_filter_codes.append(nc.main(cap_name, end_time=time_dict[list(time_dict.keys())[0]]))
 
         # write to txt file
         file_name = app_name + "_" + test_name + \
-            "_No" + str(test_round) + ".txt"
+            "_t" + str(test_round) + ".txt"
         with open(file_name, 'w') as file:
             print("\nDevices:")
             file.write("Devices:\n")
