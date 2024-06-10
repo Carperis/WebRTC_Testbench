@@ -3,6 +3,7 @@ import threading
 import time
 import re
 import datetime
+import noise_cancellation as nc
 
 
 def read_action_from_file(file_path):
@@ -85,13 +86,15 @@ def tshark_terminate(process):
 
 
 if __name__ == "__main__":
-    test_name = "test"
+    app_name = "Discord"
+    test_name = "O2O"
+    test_round = 1
     noise_duration = 10
     actions = read_action_from_file("actions.txt")
     time_dict = {}
     devices = {
         "00008101-001A08392684001E": "caller",
-        "00008020-000E6C303485002E": "callee",
+        "00008027-000A50102106802E": "callee",
     }
 
     # Execute the initial commands
@@ -101,27 +104,57 @@ if __name__ == "__main__":
 
     process_list = []
     for d in interfaces.keys():
-        cap_name = test_name + "_" + str(devices[d]) + '.pcap'
+        cap_name = app_name + "_" + test_name + "_No" + \
+            str(test_round) + "_" + str(devices[d]) + '.pcapng'
         process = tshark_init('tshark', interfaces[d], cap_name)
         process_list.append(process)
 
-    print("Capturing noise for " + str(noise_duration) + " seconds...")
-    for remaining in range(noise_duration, 0, -1):
-        print(f"Time remaining: {remaining} seconds" + " " * 5, end='\r')
-        time.sleep(1)
-    print("Noise capture is complete" + " " * 10 + "\n")
+    if process_list:
+        print("Capturing noise for " + str(noise_duration) + " seconds...")
+        for remaining in range(noise_duration, 0, -1):
+            print(f"Time remaining: {remaining} seconds" + " " * 5, end='\r')
+            time.sleep(1)
+        print("Noise capture is complete" + " " * 10 + "\n")
 
-    for time_point in actions:
-        record_time(time_point, time_dict)
+        for time_point in actions:
+            record_time(time_point, time_dict)
 
-    for process in process_list:
-        tshark_terminate(process)
-    interface_ctrl(devices, init=False)
+        for process in process_list:
+            tshark_terminate(process)
+        interface_ctrl(devices, init=False)
 
-    print("\nSummary:")
-    for key in time_dict:
-        print(f"{key}: { time_dict[key]}")
+        nc_filter_codes = []
+        for d in interfaces.keys():
+            cap_name = app_name + "_" + test_name + "_No" + \
+                str(test_round) + "_" + str(devices[d]) + '.pcapng'
+            nc_filter_codes.append(nc.main(cap_name, duration_seconds=noise_duration))
 
-    times = list(time_dict.keys())
-    print("\nFilter:")
-    print(get_filter(times[0], times[-1]))
+        # write to txt file
+        file_name = app_name + "_" + test_name + \
+            "_No" + str(test_round) + ".txt"
+        with open(file_name, 'w') as file:
+            print("\nDevices:")
+            file.write("Devices:\n")
+            for key in devices:
+                print(f"{key}: {devices[key]},")
+                file.write(f"{key}: {devices[key]},\n")
+            
+            print("\nActions:")
+            file.write("\nActions:\n")
+            for time_point in actions:
+                print(time_point)
+                file.write(time_point + "\n")
+            
+            print("\nSummary:")
+            file.write("\nSummary:\n")
+            for key in time_dict:
+                print(f"{key}: { time_dict[key]}")
+                file.write(f"{key}: { time_dict[key]}\n")
+            times = list(time_dict.keys())
+            print(f"\nFilter:\n{get_filter(times[0], times[-1])}")
+            file.write(f"\nFilter:\n{get_filter(times[0], times[-1])}\n")
+            for i in range(len(nc_filter_codes)):
+                role = list(devices.values())[i]
+                code = nc_filter_codes[i]
+                print("\nNoise Cancellation Code ("+ role +")\n" + code)
+                file.write("\nNoise Cancellation Code ("+ role +")\n" + code + "\n")
