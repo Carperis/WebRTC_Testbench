@@ -13,11 +13,19 @@ def read_action_from_file(file_path):
     return [action.strip() for action in actions]
 
 
-def record_time(str, time_dict):
+def record_time(str, time_dict, delay=True):
     input(f"Press Enter @ {str}: ")
     current_time = datetime.datetime.now()
     time_string = current_time.strftime("%Y-%m-%d %H:%M:%S.%f%z")
-    print(time_string)
+    try:
+        duration = int(re.search(r'\[(.*?)s\]', str).group(1))
+    except:
+        duration = 0
+    if delay:
+        for remaining in range(duration, 0, -1):
+            print(f"Time remaining: {remaining} seconds" + " " * 5, end='\r')
+            time.sleep(1)
+    print(time_string + " " * 10)
     time_dict[time_string] = str
     return time_string
 
