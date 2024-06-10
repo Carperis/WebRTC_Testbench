@@ -25,7 +25,7 @@ def extract_public_ips(input_file, duration_seconds=10, end_time=None):
     for packet in cap:
         if start_time is None:
             start_time = packet.sniff_time
-            # print(f"Start time: {start_time}")
+            print(f"Start time: {start_time}")
 
         if end_time is None:
             packet_time = packet.sniff_time
