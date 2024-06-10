@@ -99,7 +99,7 @@ if __name__ == "__main__":
     }
     
     if (os.system('clear') == 1):
-    os.system('cls')
+        os.system('cls')
 
     # Execute the initial commands
     interface_ctrl(devices, init=False)
