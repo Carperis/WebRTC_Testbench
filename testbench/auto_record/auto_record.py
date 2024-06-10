@@ -2,6 +2,7 @@ import subprocess
 import threading
 import time
 import re
+import os
 import datetime
 import noise_cancellation as nc
 
@@ -96,6 +97,9 @@ if __name__ == "__main__":
         "00008101-001A08392684001E": "caller",
         "00008027-000A50102106802E": "callee",
     }
+    
+    if (os.system('clear') == 1):
+    os.system('cls')
 
     # Execute the initial commands
     interface_ctrl(devices, init=False)
